@@ -124,7 +124,7 @@ Future<void> main(List<String> args) async {
       lastPath = report.filePath;
 
       if (markdown) {
-        stdout.writeln('-' * 80);
+        stdout.writeln('-' * 3);
         stdout.writeln();
         stdout.writeln('## ${report.filePath}');
         stdout.writeln();
