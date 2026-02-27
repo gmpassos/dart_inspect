@@ -3,8 +3,8 @@
 [![pub package](https://img.shields.io/pub/v/dart_inspect.svg?logo=dart&logoColor=00b9fc)](https://pub.dev/packages/dart_inspect)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
 [![GitHub Tag](https://img.shields.io/github/v/tag/gmpassos/dart_inspect?logo=git&logoColor=white)](https://github.com/gmpassos/dart_inspect/releases)
-[![Last Commit](https://img.shields.io/github/last-commit/gmpassos/dart_inspect?logo=github&logoColor=white)](https://github.com/gmpassos/dart_inspect/commits/main)
-[![License](https://img.shields.io/github/license/gmpassos/dart_inspect?logo=open-source-initiative&logoColor=green)](https://github.com/gmpassos/dart_inspect/blob/main/LICENSE)
+[![Last Commit](https://img.shields.io/github/last-commit/gmpassos/dart_inspect?logo=github&logoColor=white)](https://github.com/gmpassos/dart_inspect/commits/master)
+[![License](https://img.shields.io/github/license/gmpassos/dart_inspect?logo=open-source-initiative&logoColor=green)](https://github.com/gmpassos/dart_inspect/blob/master/LICENSE)
 
 `dart_inspect` is a Dart source analysis tool for **discovering and reporting project structure**.
 
