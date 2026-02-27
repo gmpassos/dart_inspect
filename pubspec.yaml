@@ -10,10 +10,10 @@ environment:
   sdk: ^3.10.0
 
 dependencies:
-  path: ^1.9.1
   analyzer: ^10.2.0
 
 dev_dependencies:
   lints: ^6.1.0
   test: ^1.29.0
+  path: ^1.9.1
   dependency_validator: ^5.0.4
