@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:dart_inspect/dart_inspect.dart';
+import 'package:path/path.dart' as path;
 import 'package:test/test.dart';
 
 void main() {
@@ -190,7 +191,7 @@ class User {
     });
 
     test('scanFile propagates filePath', () async {
-      final file = File('${tempDir.path}/a.dart');
+      final file = File(path.join(tempDir.path, 'a.dart'));
 
       await file.writeAsString('''
 class A {
@@ -208,9 +209,9 @@ class A {
     });
 
     test('scanDirectory finds dart files recursively', () async {
-      final sub = Directory('${tempDir.path}/lib')..createSync();
+      final sub = Directory(path.join(tempDir.path, 'lib'))..createSync();
 
-      final file = File('${sub.path}/model.dart');
+      final file = File(path.join(sub.path, 'model.dart'));
 
       await file.writeAsString('''
 class Model {
