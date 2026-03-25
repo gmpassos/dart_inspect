@@ -1,0 +1,60 @@
+%% Dart Inspect - Mermaid Report
+%% Directory: .
+%% Options: --mermaid
+
+classDiagram
+
+  class DartClassFields {
+    List&lt;DartFieldInfo&gt; fields
+    String className
+  }
+
+  class DartFieldInfo {
+    String name
+    String type
+  }
+
+  class DartFileImports {
+    List&lt;DartImportInfo&gt; imports
+  }
+
+  class DartImportInfo {
+    String uri
+    String? prefix
+    bool isDeferred
+  }
+
+  class DartInspect {
+    DartInspectOptions options
+  }
+
+  class DartInspectOptions {
+    bool finalOnly
+    bool markdown
+    bool mermaid
+    bool noClasses
+    bool noFinal
+    bool noImports
+    bool noPrimitives
+    bool privateOnly
+  }
+
+  class DartInspectReporter {
+    DartInspectOptions options
+    String directory
+  }
+
+  class DartInspectReporterMermaid {
+    dynamic _classes
+  }
+
+  class ReportInfo {
+    String? filePath
+  }
+
+  %% Relationships
+  DartClassFields --> DartFieldInfo
+  DartFileImports --> DartImportInfo
+  DartInspect --> DartInspectOptions
+  DartInspectReporter --> DartInspectOptions
+
