@@ -20,6 +20,8 @@ abstract class ReportInfo {
   /// when available.
   String toMarkdown({bool withFilePath = true});
 
+  String toMermaid();
+
   /// Returns a human-readable textual representation of this report.
   ///
   /// When [withFilePath] is `true`, the associated file path is included
@@ -89,6 +91,41 @@ class DartClassFields extends ReportInfo {
     return out.toString();
   }
 
+  /// Returns a Mermaid representation of this class and its fields.
+  ///
+  /// Produces a `classDiagram`-compatible class node, where each field
+  /// is rendered as a class member using the format `type name`.
+  ///
+  /// The class name is sanitized to a valid Mermaid identifier.
+  ///
+  /// This output is intended to be composed with other Mermaid fragments
+  /// (e.g., multiple classes or relationships) under a single
+  /// `classDiagram` block.
+  ///
+  /// Example output:
+  /// ```mermaid
+  /// class User {
+  ///   String name
+  ///   int age
+  /// }
+  /// ```
+  @override
+  String toMermaid() {
+    final b = StringBuffer();
+
+    final classId = className.toMermaidId();
+
+    b.writeln('class $classId {');
+
+    for (final f in fields) {
+      b.writeln('  ${f.type} ${f.name}');
+    }
+
+    b.writeln('}');
+
+    return b.toString();
+  }
+
   /// Returns a readable multiline description of the class and its fields.
   ///
   /// Optionally includes the source file path.
@@ -155,6 +192,43 @@ class DartImportInfo extends ReportInfo {
     return buf.toString();
   }
 
+  /// Returns a Mermaid representation of this import.
+  ///
+  /// Produces a dependency edge suitable for a `classDiagram`,
+  /// connecting the source file to the imported URI.
+  ///
+  /// The source node is derived from [filePath] when available,
+  /// or `'unknown'` otherwise. Both source and target identifiers
+  /// are sanitized to be valid Mermaid node IDs.
+  ///
+  /// If a prefix (`as`) or `deferred` modifier is present,
+  /// they are included as an edge label.
+  ///
+  /// Example output:
+  /// ```mermaid
+  /// my_file_dart --> dart_async
+  /// my_file_dart -->|as http| package_http_http_dart
+  /// my_file_dart -->|deferred| some_lib
+  /// ```
+  @override
+  String toMermaid() {
+    final from = (filePath ?? 'unknown').toMermaidId();
+    final to = uri.toMermaidId();
+
+    final label = StringBuffer();
+    if (prefix != null) label.write('as $prefix');
+    if (isDeferred) {
+      if (label.isNotEmpty) label.write(', ');
+      label.write('deferred');
+    }
+
+    if (label.isEmpty) {
+      return '$from --> $to';
+    }
+
+    return '$from -->|${label.toString()}| $to';
+  }
+
   /// Returns a readable textual representation of the import.
   @override
   String toString({bool withFilePath = true}) {
@@ -209,6 +283,41 @@ class DartFileImports extends ReportInfo {
     return out.toString();
   }
 
+  /// Returns a Mermaid representation of this file's imports.
+  ///
+  /// Produces a set of relationships suitable for a `classDiagram`,
+  /// where the current file is represented as a node and each import
+  /// is rendered as a dependency edge to the imported URI.
+  ///
+  /// The file is identified using a sanitized version of [filePath]
+  /// when available, or `'unknown'` otherwise.
+  ///
+  /// Each import is delegated to [DartImportInfo.toMermaid], allowing
+  /// prefixes (`as`) and `deferred` modifiers to be included as edge labels.
+  ///
+  /// Example output:
+  /// ```mermaid
+  /// classDiagram
+  /// class my_file_dart
+  /// my_file_dart --> dart_async
+  /// my_file_dart -->|as http| package_http_http_dart
+  /// ```
+  @override
+  String toMermaid() {
+    final b = StringBuffer();
+
+    final fileId = (filePath ?? 'unknown').toMermaidId();
+
+    // Represent file as a class-like node
+    b.writeln('class $fileId');
+
+    for (final imp in imports) {
+      b.writeln(imp.toMermaid());
+    }
+
+    return b.toString();
+  }
+
   /// Returns a readable multiline representation of file imports.
   ///
   /// Optionally includes the source file path.
@@ -231,4 +340,8 @@ class DartFileImports extends ReportInfo {
 
     return out.toString();
   }
+}
+
+extension _MermaidSanitize on String {
+  String toMermaidId() => replaceAll(RegExp(r'[^a-zA-Z0-9_]'), '_');
 }

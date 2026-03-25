@@ -16,3 +16,6 @@ library;
 
 export 'src/dart_inspect_base.dart';
 export 'src/report_info.dart';
+export 'src/reporter_markdown.dart';
+export 'src/reporter_mermaid.dart';
+export 'src/reporter_simple.dart';

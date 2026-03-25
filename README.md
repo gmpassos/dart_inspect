@@ -32,13 +32,15 @@ Activate globally:
 
 ```bash
 dart pub global activate dart_inspect
-````
+```
 
 Run inspection:
 
 ```bash
 dart_inspect [directory] [options]
 ```
+
+---
 
 ### Options
 
@@ -63,8 +65,26 @@ dart_inspect [directory] [options]
 * `--markdown`
   Output report in Markdown format.
 
+* `--mermaid`
+  Output report as a Mermaid class diagram.
+
+* `--simple`
+  Force simple output (default when no format is specified).
+
 * `-h`, `--help`
   Show help message.
+
+---
+
+### Format Notes
+
+Formats are **mutually exclusive**:
+
+* `--simple` (default)
+* `--markdown`
+* `--mermaid`
+
+If none is specified, `simple` is used automatically.
 
 ---
 
@@ -88,6 +108,12 @@ Generate a Markdown architecture report:
 dart_inspect lib --markdown
 ```
 
+Generate a Mermaid class diagram:
+
+```bash
+dart_inspect lib --mermaid
+```
+
 Inspect only private state fields:
 
 ```bash
@@ -107,7 +133,18 @@ dart_inspect lib --no-primitives
 ### Simple Output
 
 ```
+dart_inspect
+────────────────────────────────────────────
+
+Directory : lib
+Format    : simple
+Options   : (none)
+
+================================================================================
 lib/src/user.dart
+
+Imports:
+  dart:async
 
 User
   int id
@@ -120,12 +157,21 @@ User
 ### Markdown Output
 
 ```md
+# Dart Inspect Report
+
+## Configuration
+
+- Directory: `lib`
+- Format: markdown
+- Options: (none)
+
+---
+
 ## lib/src/user.dart
 
 ### Imports
 
 - `dart:async`
-- `package:http/http.dart`
 
 ### User
 
@@ -143,9 +189,48 @@ Perfect for:
 
 ---
 
+### Mermaid Output
+
+```mermaid
+%% Dart Inspect - Mermaid Report
+%% Directory: lib
+%% Options: (none)
+
+classDiagram
+
+  class User {
+    int id
+    String name
+    Token token
+  }
+
+  class Token {
+    String value
+  }
+
+  %% Relationships
+  User --> Token
+```
+
+Perfect for:
+
+* visual architecture diagrams
+* class relationship exploration
+* system design documentation
+
+You can render this using:
+
+* [https://mermaid.live](https://mermaid.live)
+* GitHub Markdown (with Mermaid enabled)
+* tools like Obsidian, Notion, or VS Code extensions
+
+---
+
 ## Programmatic Usage
 
 `dart_inspect` can be embedded directly into Dart tools and automation workflows.
+
+### Using reporters (recommended)
 
 ```dart
 import 'dart:io';
@@ -159,14 +244,19 @@ Future<void> main() async {
 
   final inspector = DartInspect(options);
 
-  await for (final report
-      in inspector.scanDirectory(Directory('lib'))) {
-    print(report.toMarkdown());
-  }
+  final reporter = DartInspectReporterMarkdown('lib', options);
+
+  final output = await reporter.build(
+    inspector.scanDirectory(Directory('lib')),
+  );
+
+  print(output);
 }
 ```
 
-You can also analyze raw source code:
+---
+
+### Streaming raw reports
 
 ```dart
 final inspect = DartInspect(
@@ -177,6 +267,19 @@ await for (final report in inspect.scanCode(source)) {
   print(report);
 }
 ```
+
+---
+
+### Available Reporters
+
+* `DartInspectReporterSimple`
+* `DartInspectReporterMarkdown`
+* `DartInspectReporterMermaid`
+
+Each reporter:
+
+* consumes a `Stream<ReportInfo>`
+* produces a formatted `String` output
 
 ---
 
@@ -212,4 +315,3 @@ Graciliano M. Passos: [gmpassos@GitHub][github]
 ## License
 
 Dart free & open-source [license](https://github.com/dart-lang/stagehand/blob/master/LICENSE).
-

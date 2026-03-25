@@ -38,6 +38,9 @@ class DartInspectOptions {
   /// Output report in Markdown format.
   final bool markdown;
 
+  /// Output report in Mermaid (class diagram) format.
+  final bool mermaid;
+
   /// Creates inspection options.
   ///
   /// The assertion prevents incompatible configurations where both
@@ -50,10 +53,15 @@ class DartInspectOptions {
     this.noClasses = false,
     this.noImports = false,
     this.markdown = false,
-  }) : assert(!(finalOnly && noFinal), 'Cannot use finalOnly with noFinal');
+    this.mermaid = false,
+  }) : assert(!(finalOnly && noFinal), 'Cannot use finalOnly with noFinal'),
+       assert(
+         !(markdown && mermaid),
+         'Choose either `markdown` or `mermaid`, not both',
+       );
 
   /// Returns `true` when using the simple (non-Markdown) output mode.
-  bool get simple => !markdown;
+  bool get simple => !markdown && !mermaid;
 
   /// Internal flag names representing enabled options.
   ///
@@ -66,6 +74,7 @@ class DartInspectOptions {
     if (noClasses) 'noClasses',
     if (noImports) 'noImports',
     if (markdown) 'markdown',
+    if (mermaid) 'mermaid',
   ];
 
   /// CLI-style option names corresponding to enabled flags.
@@ -79,6 +88,7 @@ class DartInspectOptions {
     if (noClasses) '--no-classes',
     if (noImports) '--no-imports',
     if (markdown) '--markdown',
+    if (mermaid) '--mermaid',
   ];
 
   @override
@@ -231,4 +241,33 @@ class DartInspect {
       }
     }
   }
+}
+
+/// Base contract for reporters that transform inspection results
+/// into a final output format.
+///
+/// A [DartInspectReporter] consumes a stream of [ReportInfo] entries
+/// and produces a formatted representation such as Markdown, JSON,
+/// or diagrams.
+///
+/// Implementations are responsible for:
+/// - Processing the incoming stream
+/// - Aggregating or organizing data as needed
+/// - Returning the final rendered output
+abstract class DartInspectReporter {
+  /// Root directory being inspected.
+  final String directory;
+
+  /// Options used to configure the inspection.
+  final DartInspectOptions options;
+
+  /// Creates a reporter for a given [directory] using [options].
+  DartInspectReporter(this.directory, this.options);
+
+  /// Consumes a stream of inspection results and returns
+  /// the generated output as a string.
+  ///
+  /// The [stream] provides incremental [ReportInfo] items,
+  /// allowing implementations to process large codebases efficiently.
+  Future<String> build(Stream<ReportInfo> stream);
 }

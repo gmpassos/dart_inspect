@@ -14,6 +14,7 @@ Options:
   --no-classes       Do not show class fields
 
   --markdown         Markdown output
+  --mermaid          Mermaid output
   --simple           Simple output (default)
 
   -h, --help         Show this help
@@ -36,6 +37,7 @@ Future<void> main(List<String> args) async {
     '--no-imports',
     '--no-classes',
     '--markdown',
+    '--mermaid',
     '--simple',
   };
 
@@ -48,11 +50,15 @@ Future<void> main(List<String> args) async {
   }
 
   final markdown = optionsSet.contains('--markdown');
-  final simple = optionsSet.contains('--simple');
+  final mermaid = optionsSet.contains('--mermaid');
+  final simple =
+      optionsSet.contains('--simple') || (!markdown && !mermaid); // default
 
-  if (simple && markdown) {
+  // Validate mutually exclusive formats
+  final formats = [markdown, mermaid, simple].where((e) => e).length;
+  if (formats > 1) {
     stderr.writeln(
-      '** Options --simple and --markdown cannot be used together.',
+      '** Options --simple, --markdown and --mermaid are mutually exclusive.',
     );
     stderr.writeln(_usage);
     exit(64);
@@ -66,6 +72,7 @@ Future<void> main(List<String> args) async {
     noImports: optionsSet.contains('--no-imports'),
     noClasses: optionsSet.contains('--no-classes'),
     markdown: markdown,
+    mermaid: mermaid,
   );
 
   final root = Directory(dirPath);
@@ -77,82 +84,18 @@ Future<void> main(List<String> args) async {
 
   final inspector = DartInspect(inspectOptions);
 
-  String? lastPath;
-
+  // Select reporter
+  final DartInspectReporter reporter;
   if (markdown) {
-    stdout.writeln('# Dart Inspect Report');
-    stdout.writeln();
-
-    stdout.writeln('## Configuration');
-    stdout.writeln();
-
-    stdout.writeln('- Directory: `$dirPath`');
-
-    stdout.writeln(
-      '- Format: ${inspectOptions.markdown ? 'markdown' : 'simple'}',
-    );
-
-    final opts = inspectOptions.options;
-    if (opts.isEmpty) {
-      stdout.writeln('- Options: (none)');
-    } else {
-      stdout.writeln('- Options:');
-      for (final o in opts) {
-        stdout.writeln('  $o');
-      }
-    }
-
-    stdout.writeln();
+    reporter = DartInspectReporterMarkdown(dirPath, inspectOptions);
+  } else if (mermaid) {
+    reporter = DartInspectReporterMermaid(dirPath, inspectOptions);
   } else {
-    stdout.writeln('dart_inspect');
-    stdout.writeln('─' * 60);
-
-    stdout.writeln('Directory : $dirPath');
-
-    stdout.writeln(
-      'Format    : ${inspectOptions.markdown ? 'markdown' : 'simple'}',
-    );
-
-    final opts = inspectOptions.options;
-    stdout.writeln('Options   : ${opts.isEmpty ? '(none)' : opts.join(', ')}');
-
-    stdout.writeln();
+    reporter = DartInspectReporterSimple(dirPath, inspectOptions);
   }
 
-  await for (final report in inspector.scanDirectory(root)) {
-    if (report.filePath != lastPath) {
-      lastPath = report.filePath;
+  // Build and print output
+  final output = await reporter.build(inspector.scanDirectory(root));
 
-      if (markdown) {
-        stdout.writeln('-' * 3);
-        stdout.writeln();
-        stdout.writeln('## ${report.filePath}');
-        stdout.writeln();
-      } else {
-        stdout.writeln('=' * 80);
-        stdout.writeln(report.filePath);
-        stdout.writeln();
-      }
-    }
-
-    if (report is DartFileImports) {
-      if (markdown) {
-        stdout.writeln(report.toMarkdown(withFilePath: false));
-        stdout.writeln();
-      } else {
-        stdout.writeln('Imports:');
-        for (final imp in report.imports) {
-          stdout.write('  ');
-          stdout.writeln(imp.toString(withFilePath: false));
-        }
-        stdout.writeln();
-      }
-    } else if (report is DartClassFields) {
-      if (markdown) {
-        stdout.writeln(report.toMarkdown(withFilePath: false));
-      } else {
-        stdout.writeln(report.toString(withFilePath: false));
-      }
-    }
-  }
+  stdout.write(output);
 }
