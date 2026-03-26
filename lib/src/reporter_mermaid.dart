@@ -116,10 +116,11 @@ class DartInspectReporterMermaid extends DartInspectReporter {
         if (c.isMixin) 'mixin',
       ];
 
-      b.writeln('  class $name {');
+      b.writeln('  class ${_sanitize(name)} {');
 
       if (stereotypes.isNotEmpty) {
-        b.writeln('    <<${stereotypes.join(', ')}>>');
+        // Can't show multiple `stereotypes`:
+        b.writeln('    <<${stereotypes.last}>>');
       }
 
       final seen = <String>{};
@@ -150,7 +151,7 @@ class DartInspectReporterMermaid extends DartInspectReporter {
         final to = _extractTypeName(f.type);
 
         if (classes.containsKey(to)) {
-          relations.add('  ${c.className} --> $to');
+          relations.add('  ${c.className} --> ${_sanitize(to)}');
         }
       }
     }
@@ -159,7 +160,7 @@ class DartInspectReporterMermaid extends DartInspectReporter {
     var classesInfos = classes.values.toList()..sortIf(sortEntries);
 
     for (final c in classesInfos) {
-      final from = c.className;
+      final from = _sanitize(c.className);
 
       if (c.superClass != null && c.superClass!.isNotEmpty) {
         relations.add('  ${_extractClassName(c.superClass!)} <|-- $from');
@@ -185,8 +186,14 @@ class DartInspectReporterMermaid extends DartInspectReporter {
     return b.toString();
   }
 
-  String _sanitize(String t) =>
-      t.replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+  String _sanitize(String t) => t
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('\$', '_')
+      .replaceAll('(', '_')
+      .replaceAll(')', '_')
+      .replaceAll('{', '_')
+      .replaceAll('}', '_');
 
   static final _regExpClassName = RegExp(r'^(\w+)<?');
 
