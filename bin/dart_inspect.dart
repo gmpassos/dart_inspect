@@ -6,18 +6,19 @@ const _usage = '''
 dart_inspect <directory> [options]
 
 Options:
-  --private-only     Show only private fields
-  --no-primitives    Ignore primitive fields
-  --final-only       Show only final fields
-  --no-final         Ignore final fields
-  --no-imports       Do not show file imports
-  --no-classes       Do not show class fields
+  --private-only      Show only private fields
+  --no-primitives     Ignore primitive fields
+  --final-only        Show only final fields
+  --no-final          Ignore final fields
+  --no-imports        Do not show file imports
+  --no-classes        Do not show class fields
+  --no-empty-classes  Do not include empty classes
 
-  --markdown         Markdown output
-  --mermaid          Mermaid output
-  --simple           Simple output (default)
+  --markdown          Markdown output
+  --mermaid           Mermaid output
+  --simple            Simple output (default)
 
-  -h, --help         Show this help
+  -h, --help          Show this help
 ''';
 
 Future<void> main(List<String> args) async {
@@ -36,6 +37,7 @@ Future<void> main(List<String> args) async {
     '--no-final',
     '--no-imports',
     '--no-classes',
+    '--no-empty-classes',
     '--markdown',
     '--mermaid',
     '--simple',
@@ -71,6 +73,7 @@ Future<void> main(List<String> args) async {
     noFinal: optionsSet.contains('--no-final'),
     noImports: optionsSet.contains('--no-imports'),
     noClasses: optionsSet.contains('--no-classes'),
+    noEmptyClasses: optionsSet.contains('--no-empty-classes'),
     markdown: markdown,
     mermaid: mermaid,
   );
