@@ -4,9 +4,15 @@
 
 classDiagram
 
-  class DartClassFields {
+  class DartClassInfo {
     List&lt;DartFieldInfo&gt; fields
+    List&lt;String&gt; interfaces
+    List&lt;String&gt; mixins
     String className
+    String? superClass
+    bool isAbstract
+    bool isInterface
+    bool isMixin
   }
 
   class DartFieldInfo {
@@ -44,17 +50,17 @@ classDiagram
     String directory
   }
 
-  class DartInspectReporterMermaid {
-    dynamic _classes
-  }
-
   class ReportInfo {
     String? filePath
   }
 
   %% Relationships
-  DartClassFields --> DartFieldInfo
+  Comparable <|.. ReportInfo
+  DartClassInfo --> DartFieldInfo
   DartFileImports --> DartImportInfo
   DartInspect --> DartInspectOptions
   DartInspectReporter --> DartInspectOptions
+  ReportInfo <|-- DartClassInfo
+  ReportInfo <|-- DartFileImports
+  ReportInfo <|-- DartImportInfo
 

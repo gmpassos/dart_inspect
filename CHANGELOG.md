@@ -31,6 +31,8 @@
 - `DartImportInfo`:
   - Implements `Comparable` for sorting by URI.
 
+- collection: ^1.19.1
+
 ## 1.0.2
 
 - Added Mermaid output format support:

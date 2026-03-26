@@ -1,3 +1,5 @@
+import 'package:collection/collection.dart';
+
 /// Base information used by report entries produced during Dart source analysis.
 ///
 /// A report may optionally be associated with a [filePath], allowing results
@@ -309,6 +311,9 @@ class DartClassInfo extends ReportInfo {
       other is DartClassInfo &&
           runtimeType == other.runtimeType &&
           className == other.className &&
+          superClass == other.superClass &&
+          ListEquality().equals(interfaces, other.interfaces) &&
+          ListEquality().equals(mixins, other.mixins) &&
           filePath == other.filePath;
 
   @override
