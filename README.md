@@ -21,6 +21,7 @@ The tool can be used both as a **CLI utility** and as a **programmatic inspectio
 * documentation generation
 * CI validation
 * large codebase exploration
+* Generating class diagrams and visual graphics (Mermaid)
 
 ---
 
@@ -70,6 +71,9 @@ dart_inspect [directory] [options]
 
 * `--simple`
   Force simple output (default when no format is specified).
+
+* `--sort-entries`
+  Sort fields and classes alphabetically (default: false)
 
 * `-h`, `--help`
   Show help message.
