@@ -96,7 +96,7 @@ class DartClassInfo extends ReportInfo {
   /// List of implemented interfaces (from `implements`).
   final List<String> interfaces;
 
-  /// List of implemented interfaces (from `implements`).
+  /// List of implemented mixins (from `implements`).
   final List<String> mixins;
 
   /// Whether this class is declared as `abstract`.
@@ -215,7 +215,6 @@ class DartClassInfo extends ReportInfo {
   /// Serializable <|.. User
   /// ```
   @override
-  @override
   String toMermaid() {
     final b = StringBuffer();
 
@@ -317,7 +316,7 @@ class DartClassInfo extends ReportInfo {
           filePath == other.filePath;
 
   @override
-  int get hashCode => className.hashCode;
+  int get hashCode => Object.hash(className, superClass, filePath);
 
   @override
   int compareTo(ReportInfo other) {

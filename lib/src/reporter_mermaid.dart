@@ -51,12 +51,11 @@ import 'report_info.dart';
 /// - Markdown files with Mermaid support
 ///
 /// ### Notes
-/// - Only [DartClassFields] reports are currently used
+/// - Only [DartClassInfo] reports are currently used
 /// - Generic types like `List<Foo>` are resolved to `Foo`
 /// - Nullable types (`Foo?`) are normalized to `Foo`
 ///
 /// ### Limitations
-/// - Does not detect inheritance (`extends`, `implements`)
 /// - Does not distinguish between composition and aggregation
 /// - Only supports simple generic extraction (`<T>`)
 class DartInspectReporterMermaid extends DartInspectReporter {
