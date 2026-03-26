@@ -54,7 +54,7 @@ abstract class ReportInfo implements Comparable<ReportInfo> {
 /// Describes a Dart class field.
 ///
 /// Stores the field [name] and its declared Dart [type].
-class DartFieldInfo {
+class DartFieldInfo implements Comparable<DartFieldInfo> {
   /// Field name.
   final String name;
 
@@ -69,6 +69,15 @@ class DartFieldInfo {
   /// Returns the field formatted as `type name`.
   @override
   String toString() => '$type $name';
+
+  @override
+  int compareTo(DartFieldInfo other) {
+    var cmp = name.compareTo(other.name);
+    if (cmp == 0) {
+      cmp = type.compareTo(other.type);
+    }
+    return cmp;
+  }
 }
 
 /// Report describing a Dart class, including its fields and hierarchy.
@@ -174,15 +183,22 @@ class DartClassInfo extends ReportInfo {
       out.write('\nFile: $filePath\n');
     }
 
+    var classKind = false;
+
     if (superClass != null && superClass!.isNotEmpty) {
+      classKind = true;
       out.writeln('\nExtends: $superClass');
     }
 
     if (interfaces.isNotEmpty) {
+      if (!classKind) out.writeln();
+      classKind = true;
       out.writeln('Implements: ${interfaces.join(', ')}');
     }
 
     if (mixins.isNotEmpty) {
+      if (!classKind) out.writeln();
+      classKind = true;
       out.writeln('With: ${mixins.join(', ')}');
     }
 
@@ -532,6 +548,18 @@ class DartFileImports extends ReportInfo {
     }
 
     return out.toString();
+  }
+
+  @override
+  int compareTo(ReportInfo other) {
+    var cmp = super.compareTo(other);
+    if (cmp != 0) return cmp;
+
+    if (other is! DartFileImports) {
+      return -1;
+    }
+
+    return cmp;
   }
 }
 

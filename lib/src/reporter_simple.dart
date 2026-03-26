@@ -39,12 +39,7 @@ class DartInspectReporterSimple extends DartInspectReporter {
       final reports = files[path]!;
 
       // deterministic order
-      reports.sort((a, b) {
-        if (a is DartClassInfo && b is DartClassInfo) {
-          return a.className.compareTo(b.className);
-        }
-        return a.runtimeType.toString().compareTo(b.runtimeType.toString());
-      });
+      reports.sort();
 
       for (final report in reports) {
         if (report is DartFileImports) {

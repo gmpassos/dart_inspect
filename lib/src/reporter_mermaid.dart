@@ -121,9 +121,13 @@ class DartInspectReporterMermaid extends DartInspectReporter {
       }
 
       final seen = <String>{};
-      final sortedFields =
-          c.fields.map((f) => '${_sanitize(f.type)} ${f.name}').toSet().toList()
-            ..sort();
+
+      var fields = c.fields.toList()..sort();
+
+      final sortedFields = fields
+          .map((f) => '${_sanitize(f.type)} ${f.name}')
+          .toSet()
+          .toList();
 
       for (final field in sortedFields) {
         if (!seen.add(field)) continue;

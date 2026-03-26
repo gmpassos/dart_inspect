@@ -30,7 +30,7 @@ class DartInspectReporterMarkdown extends DartInspectReporter {
   ///
   /// Supported report types:
   /// - [DartFileImports]: rendered as import lists
-  /// - [DartClassFields]: rendered as class field descriptions
+  /// - [DartClassInfo]: rendered as class signature and field descriptions
   ///
   /// Returns the full Markdown report as a [String].
   @override
@@ -79,9 +79,7 @@ class DartInspectReporterMarkdown extends DartInspectReporter {
       final reports = files[path]!;
 
       // stable ordering inside file
-      reports.sort(
-        (a, b) => a.runtimeType.toString().compareTo(b.runtimeType.toString()),
-      );
+      reports.sort();
 
       for (final report in reports) {
         if (report is DartFileImports) {
