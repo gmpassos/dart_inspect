@@ -1,3 +1,11 @@
+## 1.0.5
+
+- CLI (`bin/dart_inspect.dart`):
+  - Updated usage to accept either a directory or a file as input path.
+  - Improved path handling in `main`:
+    - Detects if input path is a file or directory.
+    - Handles non-existent paths and unsupported path types with appropriate error messages and exit codes.
+
 ## 1.0.4
 
 - `DartInspectReporterMermaid`:

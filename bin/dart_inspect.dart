@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:dart_inspect/dart_inspect.dart';
 
 const _usage = '''
-dart_inspect <directory> [options]
+dart_inspect <directory|file> [options]
 
 Options:
   --private-only      Show only private fields
@@ -29,7 +29,7 @@ Future<void> main(List<String> args) async {
     exit(0);
   }
 
-  final dirPath = args.first;
+  final path = args.first;
   final optionsSet = args.skip(1).toSet();
 
   const validOptions = {
@@ -82,11 +82,29 @@ Future<void> main(List<String> args) async {
     sortEntries: optionsSet.contains('--sort-entries'),
   );
 
-  final root = Directory(dirPath);
+  final pathType = await FileSystemEntity.type(path);
 
-  if (!await root.exists()) {
-    stderr.writeln('** Directory not found: $dirPath');
-    exit(66);
+  final FileSystemEntity root;
+
+  switch (pathType) {
+    case FileSystemEntityType.file:
+      {
+        root = File(path);
+      }
+    case FileSystemEntityType.directory:
+      {
+        root = Directory(path);
+      }
+    case FileSystemEntityType.notFound:
+      {
+        stderr.writeln('** Path not found: $path');
+        exit(66); // EX_NOINPUT
+      }
+    default:
+      {
+        stderr.writeln("** Can't handle path type `$pathType`: $path");
+        exit(69); // EX_UNAVAILABLE
+      }
   }
 
   final inspector = DartInspect(inspectOptions);
@@ -94,15 +112,21 @@ Future<void> main(List<String> args) async {
   // Select reporter
   final DartInspectReporter reporter;
   if (markdown) {
-    reporter = DartInspectReporterMarkdown(dirPath, inspectOptions);
+    reporter = DartInspectReporterMarkdown(path, inspectOptions);
   } else if (mermaid) {
-    reporter = DartInspectReporterMermaid(dirPath, inspectOptions);
+    reporter = DartInspectReporterMermaid(path, inspectOptions);
   } else {
-    reporter = DartInspectReporterSimple(dirPath, inspectOptions);
+    reporter = DartInspectReporterSimple(path, inspectOptions);
   }
 
+  var scan = switch (root) {
+    File() => inspector.scanFile(root),
+    Directory() => inspector.scanDirectory(root),
+    _ => throw StateError("Invalid root: $root"),
+  };
+
   // Build and print output
-  final output = await reporter.build(inspector.scanDirectory(root));
+  final output = await reporter.build(scan);
 
   stdout.write(output);
 }

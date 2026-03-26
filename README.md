@@ -60,6 +60,9 @@ dart_inspect [directory] [options]
 * `--no-classes`
   Do not report class fields.
 
+* `--no-empty-classes`
+  Do not include empty classes
+
 * `--no-imports`
   Do not report imports.
 
@@ -97,7 +100,7 @@ If none is specified, `simple` is used automatically.
 Inspect the current project:
 
 ```bash
-dart_inspect
+dart_inspect .
 ```
 
 Inspect another directory:
