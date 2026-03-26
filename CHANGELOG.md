@@ -1,3 +1,13 @@
+## 1.0.4
+
+- `DartInspectReporterMermaid`:
+  - `buildReport`:
+    - Sanitized class names in Mermaid output to replace special characters `$`, `(`, `)`, `{`, `}` with underscores.
+    - Limited class stereotypes to show only the last stereotype instead of multiple.
+    - Sanitized class names in relationship arrows.
+  - `_sanitize`:
+    - Extended to replace additional special characters `$`, `(`, `)`, `{`, `}` with underscores.
+
 ## 1.0.3
 
 - CLI (`bin/dart_inspect.dart`):
