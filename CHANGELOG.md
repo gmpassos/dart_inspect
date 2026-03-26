@@ -1,5 +1,12 @@
 ## 1.0.3
 
+- CLI (`bin/dart_inspect.dart`):
+  - Added new option `--no-empty-classes` to exclude empty classes from the report.
+
+- `DartInspectOptions` (`lib/src/dart_inspect_base.dart`):
+  - Added `noEmptyClasses` boolean option to exclude empty classes.
+  - Updated constructor, flags, and options getters to support `noEmptyClasses`.
+
 - Refactor `DartClassFields` to `DartClassInfo`:
   - Added fields: `interfaces`, `mixins`, `superClass`, `isAbstract`, `isInterface`, `isMixin`.
   - Updated JSON, Markdown, Mermaid, and string serialization to include class hierarchy and modifiers.
@@ -10,6 +17,7 @@
 - `DartInspect`:
   - Extracts and reports class `superClass`, `interfaces`, and `mixins`.
   - Yields `DartClassInfo` instead of `DartClassFields`.
+  - Updated class scanning logic to skip empty classes when `noEmptyClasses` is enabled.
 
 - `DartInspectReporterMarkdown`:
   - Groups reports by file path for stable output.

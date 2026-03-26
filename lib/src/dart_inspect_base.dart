@@ -32,6 +32,9 @@ class DartInspectOptions {
   /// Do not include class fields in the report.
   final bool noClasses;
 
+  /// Do not include empty classes in the report.
+  final bool noEmptyClasses;
+
   /// Do not include file imports in the report.
   final bool noImports;
 
@@ -51,6 +54,7 @@ class DartInspectOptions {
     this.finalOnly = false,
     this.noFinal = false,
     this.noClasses = false,
+    this.noEmptyClasses = false,
     this.noImports = false,
     this.markdown = false,
     this.mermaid = false,
@@ -72,6 +76,7 @@ class DartInspectOptions {
     if (finalOnly) 'finalOnly',
     if (noFinal) 'noFinal',
     if (noClasses) 'noClasses',
+    if (noEmptyClasses) 'noEmptyClasses',
     if (noImports) 'noImports',
     if (markdown) 'markdown',
     if (mermaid) 'mermaid',
@@ -86,6 +91,7 @@ class DartInspectOptions {
     if (finalOnly) '--final-only',
     if (noFinal) '--no-final',
     if (noClasses) '--no-classes',
+    if (noEmptyClasses) '--no-empty-classes',
     if (noImports) '--no-imports',
     if (markdown) '--markdown',
     if (mermaid) '--mermaid',
@@ -259,16 +265,26 @@ class DartInspect {
           }
         }
 
-        if (fields.isEmpty) continue;
+        if (fields.isEmpty && options.noEmptyClasses) {
+          continue;
+        }
 
         final className = decl.namePart.typeName.lexeme;
+
+        final isAbstract = decl.abstractKeyword != null;
+        final isInterface = decl.interfaceKeyword != null;
+        final isMixin = decl.mixinKeyword != null;
 
         yield DartClassInfo(
           className,
           fields,
           superClass: superClass,
           interfaces: interfaces,
+          mixins: mixins,
           filePath: filePath,
+          isAbstract: isAbstract,
+          isInterface: isInterface,
+          isMixin: isMixin,
         );
       }
     }

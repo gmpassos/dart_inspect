@@ -142,7 +142,9 @@ class User {
     });
 
     test('noPrimitives removes primitive fields', () async {
-      final results = await scan(const DartInspectOptions(noPrimitives: true));
+      final results = await scan(
+        const DartInspectOptions(noPrimitives: true, noEmptyClasses: true),
+      );
 
       expect(results.whereType<DartClassInfo>(), isEmpty);
     });
