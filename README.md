@@ -21,13 +21,13 @@ The tool can be used both as a **CLI utility** and as a **programmatic inspectio
 * documentation generation
 * CI validation
 * large codebase exploration
-* Generating class diagrams and visual graphics (Mermaid)
+* generating class diagrams and visual graphics (Mermaid)
 
 ---
 
 ## Usage
 
-## CLI
+### CLI
 
 Activate globally:
 
@@ -35,51 +35,30 @@ Activate globally:
 dart pub global activate dart_inspect
 ```
 
-Run inspection:
+Run inspection on a **directory or file**:
 
 ```bash
-dart_inspect [directory] [options]
+dart_inspect <path> [options]
 ```
+
+> `<path>` can be a single Dart file or a directory containing Dart files.
 
 ---
 
 ### Options
 
-* `--private-only`
-  Include only private fields (`_field`).
-
-* `--final-only`
-  Include only `final` fields.
-
-* `--no-final`
-  Exclude `final` fields.
-
-* `--no-primitives`
-  Ignore primitive/common Dart types such as `String`, `int`, `bool`, etc.
-
-* `--no-classes`
-  Do not report class fields.
-
-* `--no-empty-classes`
-  Do not include empty classes
-
-* `--no-imports`
-  Do not report imports.
-
-* `--markdown`
-  Output report in Markdown format.
-
-* `--mermaid`
-  Output report as a Mermaid class diagram.
-
-* `--simple`
-  Force simple output (default when no format is specified).
-
-* `--sort-entries`
-  Sort fields and classes alphabetically (default: false)
-
-* `-h`, `--help`
-  Show help message.
+* `--private-only` – Include only private fields (`_field`).
+* `--final-only` – Include only `final` fields.
+* `--no-final` – Exclude `final` fields.
+* `--no-primitives` – Ignore primitive/common Dart types such as `String`, `int`, `bool`, etc.
+* `--no-classes` – Do not report class fields.
+* `--no-empty-classes` – Do not include empty classes.
+* `--no-imports` – Do not report imports.
+* `--markdown` – Output report in Markdown format.
+* `--mermaid` – Output report as a Mermaid class diagram.
+* `--simple` – Force simple output (default when no format is specified).
+* `--sort-entries` – Sort fields and classes alphabetically (default: false)
+* `-h`, `--help` – Show help message.
 
 ---
 
@@ -103,10 +82,16 @@ Inspect the current project:
 dart_inspect .
 ```
 
-Inspect another directory:
+Inspect a specific directory:
 
 ```bash
 dart_inspect ../backend
+```
+
+Inspect a single Dart file:
+
+```bash
+dart_inspect lib/src/user.dart
 ```
 
 Generate a Markdown architecture report:
@@ -135,9 +120,9 @@ dart_inspect lib --no-primitives
 
 ---
 
-## Example Output
+### Example Output
 
-### Simple Output
+#### Simple Output
 
 ```
 dart_inspect
@@ -159,16 +144,14 @@ User
   Token _token
 ```
 
----
-
-### Markdown Output
+#### Markdown Output
 
 ```md
 # Dart Inspect Report
 
 ## Configuration
 
-- Directory: `lib`
+- Path: `lib`
 - Format: markdown
 - Options: (none)
 
@@ -187,20 +170,11 @@ User
 - Token _token
 ```
 
-Perfect for:
-
-* GitHub documentation
-* architecture reports
-* automated CI artifacts
-* AI input
-
----
-
-### Mermaid Output
+#### Mermaid Output
 
 ```mermaid
 %% Dart Inspect - Mermaid Report
-%% Directory: lib
+%% Path: lib
 %% Options: (none)
 
 classDiagram
@@ -219,25 +193,11 @@ classDiagram
   User --> Token
 ```
 
-Perfect for:
-
-* visual architecture diagrams
-* class relationship exploration
-* system design documentation
-
-You can render this using:
-
-* [https://mermaid.live](https://mermaid.live)
-* GitHub Markdown (with Mermaid enabled)
-* tools like Obsidian, Notion, or VS Code extensions
-
 ---
 
-## Programmatic Usage
+### Programmatic Usage
 
 `dart_inspect` can be embedded directly into Dart tools and automation workflows.
-
-### Using reporters (recommended)
 
 ```dart
 import 'dart:io';
@@ -263,7 +223,7 @@ Future<void> main() async {
 
 ---
 
-### Streaming raw reports
+### Streaming Raw Reports
 
 ```dart
 final inspect = DartInspect(

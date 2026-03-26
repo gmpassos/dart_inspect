@@ -6,6 +6,11 @@
     - Detects if input path is a file or directory.
     - Handles non-existent paths and unsupported path types with appropriate error messages and exit codes.
 
+- `DartInspectReporter` and subclasses (`reporter_markdown.dart`, `reporter_mermaid.dart`, `reporter_simple.dart`):
+  - Renamed constructor parameter from `directory` to `path` to reflect that input can be a file or directory.
+  - Updated all references and documentation accordingly.
+  - Updated output headers to use `Path` instead of `Directory`.
+
 ## 1.0.4
 
 - `DartInspectReporterMermaid`:

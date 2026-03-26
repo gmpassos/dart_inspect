@@ -309,14 +309,14 @@ class DartInspect {
 /// - Aggregating or organizing data as needed
 /// - Returning the final rendered output
 abstract class DartInspectReporter {
-  /// Root directory being inspected.
-  final String directory;
+  /// Root path (file or directory) being inspected.
+  final String path;
 
   /// Options used to configure the inspection.
   final DartInspectOptions options;
 
-  /// Creates a reporter for a given [directory] using [options].
-  DartInspectReporter(this.directory, this.options);
+  /// Creates a reporter for a given [path] using [options].
+  DartInspectReporter(this.path, this.options);
 
   /// Consumes a stream of inspection results and returns
   /// the generated output as a string.

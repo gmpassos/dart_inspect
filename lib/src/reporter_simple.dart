@@ -2,7 +2,7 @@ import 'dart_inspect_base.dart';
 import 'report_info.dart';
 
 class DartInspectReporterSimple extends DartInspectReporter {
-  DartInspectReporterSimple(super.directory, super.options);
+  DartInspectReporterSimple(super.path, super.options);
 
   @override
   Future<String> build(Stream<ReportInfo> stream) async {
@@ -22,8 +22,8 @@ class DartInspectReporterSimple extends DartInspectReporter {
     b.writeln('dart_inspect');
     b.writeln('─' * 60);
 
-    b.writeln('Directory : $directory');
-    b.writeln('Format    : simple');
+    b.writeln('Path   : $path');
+    b.writeln('Format : simple');
 
     final opts = options.options;
     b.writeln('Options   : ${opts.isEmpty ? '(none)' : opts.join(', ')}');

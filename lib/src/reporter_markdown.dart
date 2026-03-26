@@ -19,9 +19,9 @@ import 'report_info.dart';
 class DartInspectReporterMarkdown extends DartInspectReporter {
   /// Creates a Markdown reporter.
   ///
-  /// [directory] defines the base path of the analysis.
+  /// [path] defines the base path of the analysis.
   /// [options] controls filtering and formatting behavior.
-  DartInspectReporterMarkdown(super.directory, super.options);
+  DartInspectReporterMarkdown(super.path, super.options);
 
   /// Builds the Markdown report from a stream of [ReportInfo].
   ///
@@ -54,7 +54,7 @@ class DartInspectReporterMarkdown extends DartInspectReporter {
     b.writeln('## Configuration');
     b.writeln();
 
-    b.writeln('- Directory: `$directory`');
+    b.writeln('- Path: `$path`');
     b.writeln('- Format: markdown');
 
     final opts = options.options;

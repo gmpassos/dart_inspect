@@ -38,8 +38,8 @@ import 'report_info.dart';
 /// ### Usage
 /// ```dart
 /// final reporter = DartInspectReporterMermaid(
-///   directory: './lib',
-///   options: DartInspectOptions(...),
+///   './lib',
+///   DartInspectOptions(...),
 /// );
 ///
 /// final output = await reporter.build(stream);
@@ -59,7 +59,7 @@ import 'report_info.dart';
 /// - Does not distinguish between composition and aggregation
 /// - Only supports simple generic extraction (`<T>`)
 class DartInspectReporterMermaid extends DartInspectReporter {
-  DartInspectReporterMermaid(super.directory, super.options);
+  DartInspectReporterMermaid(super.path, super.options);
 
   @override
   Future<String> build(Stream<ReportInfo> stream) async {
@@ -71,7 +71,7 @@ class DartInspectReporterMermaid extends DartInspectReporter {
 
     // Header
     b.writeln('%% Dart Inspect - Mermaid Report');
-    b.writeln('%% Directory: $directory');
+    b.writeln('%% Path: $path');
     b.writeln(
       '%% Options: ${options.options.join(', ').isEmpty ? '(none)' : options.options.join(', ')}',
     );
