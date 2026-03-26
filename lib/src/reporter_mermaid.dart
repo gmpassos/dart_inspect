@@ -116,10 +116,10 @@ class DartInspectReporterMermaid extends DartInspectReporter {
         if (c.isMixin) 'mixin',
       ];
 
+      b.writeln('  class $name {');
+
       if (stereotypes.isNotEmpty) {
-        b.writeln('  class $name <<${stereotypes.join(', ')}>> {');
-      } else {
-        b.writeln('  class $name {');
+        b.writeln('    <<${stereotypes.join(', ')}>>');
       }
 
       final seen = <String>{};

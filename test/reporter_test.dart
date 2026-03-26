@@ -47,6 +47,7 @@ void main() {
       expect(output, contains('Format    : simple'));
 
       expect(output, contains('Imports:'));
+      expect(output, contains('abstract Base'));
       expect(output, contains('User'));
       expect(output, contains('Account'));
     });
@@ -90,7 +91,7 @@ void main() {
 
       expect(output, contains('class User'));
       expect(output, contains('class Account'));
-      expect(output, contains('class Base'));
+      expect(output, contains('class Base {\n    <<abstract>>'));
 
       // inheritance
       expect(output, contains('Base <|-- User'));
