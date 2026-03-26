@@ -6,14 +6,30 @@ import 'package:test/test.dart';
 Stream<ReportInfo> _mockStream() async* {
   yield DartFileImports([DartImportInfo('dart:io')], filePath: 'a.dart');
 
-  yield DartClassFields('User', [
-    DartFieldInfo('name', 'String'),
-    DartFieldInfo('account', 'Account'),
-  ], filePath: 'a.dart');
+  yield DartClassInfo(
+    'Base',
+    [DartFieldInfo('createdAt', 'DateTime')],
+    isAbstract: true,
+    filePath: 'a.dart',
+  );
 
-  yield DartClassFields('Account', [
-    DartFieldInfo('id', 'int'),
-  ], filePath: 'a.dart');
+  yield DartClassInfo(
+    'User',
+    [DartFieldInfo('name', 'String'), DartFieldInfo('account', 'Account')],
+    superClass: 'Base',
+    interfaces: ['Serializable'],
+    mixins: ['WithLogger'],
+    filePath: 'a.dart',
+  );
+
+  yield DartClassInfo(
+    'Account',
+    [DartFieldInfo('id', 'int')],
+    isInterface: true,
+    filePath: 'a.dart',
+  );
+
+  yield DartClassInfo('WithLogger', [], isMixin: true, filePath: 'a.dart');
 }
 
 void main() {
@@ -37,7 +53,7 @@ void main() {
   });
 
   group('DartInspectReporterMarkdown', () {
-    test('produces markdown structure', () async {
+    test('produces markdown structure with hierarchy', () async {
       final reporter = DartInspectReporterMarkdown(
         'test_dir',
         const DartInspectOptions(markdown: true),
@@ -49,13 +65,20 @@ void main() {
       expect(output, contains('## Configuration'));
       expect(output, contains('## a.dart'));
 
-      expect(output, contains('User'));
-      expect(output, contains('Account'));
+      // modifiers
+      expect(output, contains('abstract Base'));
+      expect(output, contains('interface Account'));
+      expect(output, contains('mixin WithLogger'));
+
+      // hierarchy
+      expect(output, contains('Extends: Base'));
+      expect(output, contains('Implements: Serializable'));
+      expect(output, contains('With: WithLogger'));
     });
   });
 
   group('DartInspectReporterMermaid', () {
-    test('produces mermaid diagram', () async {
+    test('produces mermaid diagram with full relationships', () async {
       final reporter = DartInspectReporterMermaid(
         'test_dir',
         const DartInspectOptions(mermaid: true),
@@ -67,14 +90,21 @@ void main() {
 
       expect(output, contains('class User'));
       expect(output, contains('class Account'));
+      expect(output, contains('class Base'));
 
-      // relationship inferred
-      expect(output, contains('User --> Account'));
+      // inheritance
+      expect(output, contains('Base <|-- User'));
+
+      // interface
+      expect(output, contains('Serializable <|.. User'));
+
+      // mixin (dependency style)
+      expect(output, contains('WithLogger ..> User'));
     });
 
     test('deduplicates fields', () async {
       final stream = Stream<ReportInfo>.fromIterable([
-        DartClassFields('User', [
+        DartClassInfo('User', [
           DartFieldInfo('name', 'String'),
           DartFieldInfo('name', 'String'),
         ], filePath: 'a.dart'),

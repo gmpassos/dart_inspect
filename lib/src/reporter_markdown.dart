@@ -37,7 +37,13 @@ class DartInspectReporterMarkdown extends DartInspectReporter {
   Future<String> build(Stream<ReportInfo> stream) async {
     final b = StringBuffer();
 
-    String? lastPath;
+    // Group by file
+    final files = <String, List<ReportInfo>>{};
+
+    await for (final report in stream) {
+      final path = report.filePath ?? '';
+      files.putIfAbsent(path, () => []).add(report);
+    }
 
     // Header
     b.writeln('# Dart Inspect Report');
@@ -61,22 +67,30 @@ class DartInspectReporterMarkdown extends DartInspectReporter {
 
     b.writeln();
 
-    // Stream processing
-    await for (final report in stream) {
-      if (report.filePath != lastPath) {
-        lastPath = report.filePath;
+    // Files (sorted for deterministic output)
+    final sortedPaths = files.keys.toList()..sort();
 
-        b.writeln('---');
-        b.writeln();
-        b.writeln('## ${report.filePath}');
-        b.writeln();
-      }
+    for (final path in sortedPaths) {
+      b.writeln('---');
+      b.writeln();
+      b.writeln('## $path');
+      b.writeln();
 
-      if (report is DartFileImports) {
-        b.writeln(report.toMarkdown(withFilePath: false));
-        b.writeln();
-      } else if (report is DartClassFields) {
-        b.writeln(report.toMarkdown(withFilePath: false));
+      final reports = files[path]!;
+
+      // stable ordering inside file
+      reports.sort(
+        (a, b) => a.runtimeType.toString().compareTo(b.runtimeType.toString()),
+      );
+
+      for (final report in reports) {
+        if (report is DartFileImports) {
+          b.writeln(report.toMarkdown(withFilePath: false));
+          b.writeln();
+        } else if (report is DartClassInfo) {
+          b.writeln(report.toMarkdown(withFilePath: false));
+          b.writeln();
+        }
       }
     }
 

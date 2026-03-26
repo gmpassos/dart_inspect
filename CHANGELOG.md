@@ -1,3 +1,36 @@
+## 1.0.3
+
+- Refactor `DartClassFields` to `DartClassInfo`:
+  - Added fields: `interfaces`, `mixins`, `superClass`, `isAbstract`, `isInterface`, `isMixin`.
+  - Updated JSON, Markdown, Mermaid, and string serialization to include class hierarchy and modifiers.
+  - Added equality, hashCode, and comparison operators for sorting and deduplication.
+  - Updated `DartInspect` to yield `DartClassInfo` with inheritance and interface info.
+  - Updated tests to use `DartClassInfo`.
+
+- `DartInspect`:
+  - Extracts and reports class `superClass`, `interfaces`, and `mixins`.
+  - Yields `DartClassInfo` instead of `DartClassFields`.
+
+- `DartInspectReporterMarkdown`:
+  - Groups reports by file path for stable output.
+  - Supports rendering `DartClassInfo` with hierarchy and modifiers.
+
+- `DartInspectReporterMermaid`:
+  - Collects full `DartClassInfo` objects keyed by class name.
+  - Renders class stereotypes (`abstract`, `interface`, `mixin`).
+  - Renders inheritance (`extends`), interface implementation (`implements`), and mixins as Mermaid relationships.
+  - Deduplicates fields in Mermaid output.
+
+- `DartInspectReporterSimple`:
+  - Groups reports by file path.
+  - Sorts and renders `DartClassInfo` with hierarchy info.
+
+- `ReportInfo`:
+  - Implements `Comparable` for sorting by file path and class name.
+
+- `DartImportInfo`:
+  - Implements `Comparable` for sorting by URI.
+
 ## 1.0.2
 
 - Added Mermaid output format support:

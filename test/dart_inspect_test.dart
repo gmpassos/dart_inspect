@@ -96,7 +96,7 @@ class User {
     test('class detection', () async {
       final cls = (await scan(
         const DartInspectOptions(),
-      )).whereType<DartClassFields>().single;
+      )).whereType<DartClassInfo>().single;
 
       expect(cls.className, 'User');
       expect(cls.filePath, 'test.dart');
@@ -105,7 +105,7 @@ class User {
     test('ignores static fields', () async {
       final cls = (await scan(
         const DartInspectOptions(),
-      )).whereType<DartClassFields>().single;
+      )).whereType<DartClassInfo>().single;
 
       expect(cls.fields.any((f) => f.name == 'ignored'), isFalse);
     });
@@ -113,7 +113,7 @@ class User {
     test('privateOnly filter', () async {
       final cls = (await scan(
         const DartInspectOptions(privateOnly: true),
-      )).whereType<DartClassFields>().single;
+      )).whereType<DartClassInfo>().single;
 
       expect(cls.fields.length, 1);
       expect(cls.fields.first.name, '_token');
@@ -122,7 +122,7 @@ class User {
     test('finalOnly filter', () async {
       final cls = (await scan(
         const DartInspectOptions(finalOnly: true),
-      )).whereType<DartClassFields>().single;
+      )).whereType<DartClassInfo>().single;
 
       expect(
         cls.fields.map((e) => e.name),
@@ -135,7 +135,7 @@ class User {
     test('noFinal filter', () async {
       final cls = (await scan(
         const DartInspectOptions(noFinal: true),
-      )).whereType<DartClassFields>().single;
+      )).whereType<DartClassInfo>().single;
 
       expect(cls.fields.length, 1);
       expect(cls.fields.first.name, 'name');
@@ -144,7 +144,7 @@ class User {
     test('noPrimitives removes primitive fields', () async {
       final results = await scan(const DartInspectOptions(noPrimitives: true));
 
-      expect(results.whereType<DartClassFields>(), isEmpty);
+      expect(results.whereType<DartClassInfo>(), isEmpty);
     });
 
     test('noImports option (expected behavior)', () async {
@@ -156,7 +156,7 @@ class User {
 
   group('Markdown output', () {
     test('class markdown format stable', () {
-      const report = DartClassFields('User', [
+      const report = DartClassInfo('User', [
         DartFieldInfo('id', 'int'),
       ], filePath: 'a.dart');
 
@@ -203,7 +203,7 @@ class A {
 
       final results = await inspect.scanFile(file).toList();
 
-      final cls = results.whereType<DartClassFields>().single;
+      final cls = results.whereType<DartClassInfo>().single;
 
       expect(cls.filePath, file.path);
     });
@@ -223,7 +223,7 @@ class Model {
 
       final results = await inspect.scanDirectory(tempDir).toList();
 
-      expect(results.whereType<DartClassFields>(), isNotEmpty);
+      expect(results.whereType<DartClassInfo>(), isNotEmpty);
     });
   });
 }

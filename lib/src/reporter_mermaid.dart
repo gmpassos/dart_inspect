@@ -62,12 +62,11 @@ import 'report_info.dart';
 class DartInspectReporterMermaid extends DartInspectReporter {
   DartInspectReporterMermaid(super.directory, super.options);
 
-  final _classes = <String, List<DartFieldInfo>>{};
-
-  @override
   @override
   Future<String> build(Stream<ReportInfo> stream) async {
     final b = StringBuffer();
+
+    final classes = <String, DartClassInfo>{};
 
     // Header
     b.writeln('%% Dart Inspect - Mermaid Report');
@@ -79,26 +78,52 @@ class DartInspectReporterMermaid extends DartInspectReporter {
 
     // Collect data
     await for (final report in stream) {
-      if (report is DartClassFields) {
-        final list = _classes.putIfAbsent(report.className, () => []);
-        list.addAll(report.fields);
+      if (report is DartClassInfo) {
+        final existing = classes[report.className];
+
+        if (existing == null) {
+          classes[report.className] = report;
+        } else {
+          // merge fields only (keep first metadata)
+          classes[report.className] = DartClassInfo(
+            report.className,
+            [...existing.fields, ...report.fields],
+            isAbstract: existing.isAbstract,
+            isInterface: existing.isInterface,
+            isMixin: existing.isMixin,
+            superClass: existing.superClass,
+            interfaces: existing.interfaces,
+            mixins: existing.mixins,
+            filePath: existing.filePath,
+          );
+        }
       }
     }
 
     b.writeln('classDiagram');
     b.writeln();
 
-    // Classes
-    final classNames = _classes.keys.toList()..sort();
+    final classNames = classes.keys.toList()..sort();
 
+    // Classes (with fields)
     for (final name in classNames) {
-      final fields = _classes[name]!;
+      final c = classes[name]!;
 
-      b.writeln('  class $name {');
+      final stereotypes = [
+        if (c.isAbstract) 'abstract',
+        if (c.isInterface) 'interface',
+        if (c.isMixin) 'mixin',
+      ];
+
+      if (stereotypes.isNotEmpty) {
+        b.writeln('  class $name <<${stereotypes.join(', ')}>> {');
+      } else {
+        b.writeln('  class $name {');
+      }
 
       final seen = <String>{};
       final sortedFields =
-          fields.map((f) => '${_sanitize(f.type)} ${f.name}').toSet().toList()
+          c.fields.map((f) => '${_sanitize(f.type)} ${f.name}').toSet().toList()
             ..sort();
 
       for (final field in sortedFields) {
@@ -107,21 +132,36 @@ class DartInspectReporterMermaid extends DartInspectReporter {
       }
 
       b.writeln('  }');
-      b.writeln(); // spacing between classes
+      b.writeln();
     }
 
-    // Relationships
     final relations = <String>{};
 
-    for (final entry in _classes.entries) {
-      final from = entry.key;
-
-      for (final f in entry.value) {
+    // Field-based relationships
+    for (final c in classes.values) {
+      for (final f in c.fields) {
         final to = _extractTypeName(f.type);
 
-        if (_classes.containsKey(to)) {
-          relations.add('  $from --> $to');
+        if (classes.containsKey(to)) {
+          relations.add('  ${c.className} --> $to');
         }
+      }
+    }
+
+    // Hierarchy relationships
+    for (final c in classes.values) {
+      final from = c.className;
+
+      if (c.superClass != null && c.superClass!.isNotEmpty) {
+        relations.add('  ${_extractClassName(c.superClass!)} <|-- $from');
+      }
+
+      for (final i in c.interfaces) {
+        relations.add('  ${_extractClassName(i)} <|.. $from');
+      }
+
+      for (final m in c.mixins) {
+        relations.add('  ${_extractClassName(m)} ..> $from');
       }
     }
 
@@ -139,10 +179,23 @@ class DartInspectReporterMermaid extends DartInspectReporter {
   String _sanitize(String t) =>
       t.replaceAll('<', '&lt;').replaceAll('>', '&gt;');
 
+  static final _regExpClassName = RegExp(r'^(\w+)<?');
+
+  String _extractClassName(String t) {
+    final cleaned = t.replaceAll('?', '');
+
+    final match = _regExpClassName.firstMatch(cleaned);
+    if (match != null) return match.group(1)!;
+
+    return cleaned.split('.').last;
+  }
+
+  static final _regExpTypeName = RegExp(r'<(\w+)>');
+
   String _extractTypeName(String t) {
     final cleaned = t.replaceAll('?', '');
 
-    final match = RegExp(r'<(\w+)>').firstMatch(cleaned);
+    final match = _regExpTypeName.firstMatch(cleaned);
     if (match != null) return match.group(1)!;
 
     return cleaned.split('.').last;

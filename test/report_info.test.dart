@@ -15,14 +15,14 @@ void main() {
     });
   });
 
-  group('DartClassFields', () {
+  group('DartClassInfo', () {
     final fields = [
       DartFieldInfo('name', 'String'),
       DartFieldInfo('age', 'int'),
     ];
 
     test('toJson', () {
-      final c = DartClassFields('User', fields, filePath: 'user.dart');
+      final c = DartClassInfo('User', fields, filePath: 'user.dart');
 
       expect(c.toJson(), {
         'className': 'User',
@@ -35,7 +35,7 @@ void main() {
     });
 
     test('toMarkdown with filePath', () {
-      final c = DartClassFields('User', fields, filePath: 'user.dart');
+      final c = DartClassInfo('User', fields, filePath: 'user.dart');
 
       final md = c.toMarkdown();
 
@@ -46,7 +46,7 @@ void main() {
     });
 
     test('toMarkdown without filePath', () {
-      final c = DartClassFields('User', fields);
+      final c = DartClassInfo('User', fields);
 
       final md = c.toMarkdown();
 
@@ -54,7 +54,7 @@ void main() {
     });
 
     test('toMermaid', () {
-      final c = DartClassFields('User', fields);
+      final c = DartClassInfo('User', fields);
 
       final m = c.toMermaid();
 
@@ -64,13 +64,92 @@ void main() {
     });
 
     test('toString', () {
-      final c = DartClassFields('User', fields, filePath: 'user.dart');
+      final c = DartClassInfo('User', fields, filePath: 'user.dart');
 
       final s = c.toString();
 
       expect(s, contains('User (user.dart)'));
       expect(s, contains('  String name'));
       expect(s, contains('  int age'));
+    });
+
+    test('toJson with inheritance', () {
+      final c = DartClassInfo(
+        'User',
+        fields,
+        filePath: 'user.dart',
+        superClass: 'Person',
+        interfaces: ['Serializable', 'Equatable'],
+        mixins: ['Logger', 'Validator'],
+      );
+
+      expect(c.toJson(), {
+        'className': 'User',
+        'filePath': 'user.dart',
+        'superClass': 'Person',
+        'interfaces': ['Serializable', 'Equatable'],
+        'mixins': ['Logger', 'Validator'],
+        'fields': [
+          {'name': 'name', 'type': 'String'},
+          {'name': 'age', 'type': 'int'},
+        ],
+      });
+    });
+
+    test('toMarkdown with inheritance', () {
+      final c = DartClassInfo(
+        'User',
+        fields,
+        superClass: 'Person',
+        interfaces: ['Serializable'],
+        mixins: ['Logger'],
+      );
+
+      final md = c.toMarkdown();
+
+      expect(md, contains('### User'));
+      expect(md, contains('extends Person'));
+      expect(md, contains('implements Serializable'));
+      expect(md, contains('with Logger'));
+    });
+
+    test('toMermaid with inheritance', () {
+      final c = DartClassInfo(
+        'User',
+        fields,
+        superClass: 'Person',
+        interfaces: ['Serializable'],
+        mixins: ['Logger'],
+      );
+
+      final m = c.toMermaid();
+
+      // inheritance
+      expect(m, contains('Person <|-- User'));
+
+      // interface
+      expect(m, contains('Serializable <|.. User'));
+
+      // mixin (commonly represented similarly to interface or dependency)
+      expect(m, contains('Logger <|.. User'));
+    });
+
+    test('toString with inheritance', () {
+      final c = DartClassInfo(
+        'User',
+        fields,
+        filePath: 'user.dart',
+        superClass: 'Person',
+        interfaces: ['Serializable'],
+        mixins: ['Logger'],
+      );
+
+      final s = c.toString();
+
+      expect(s, contains('User (user.dart)'));
+      expect(s, contains('extends Person'));
+      expect(s, contains('implements Serializable'));
+      expect(s, contains('with Logger'));
     });
   });
 

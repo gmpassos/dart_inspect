@@ -201,6 +201,32 @@ class DartInspect {
       for (final decl in unit.declarations) {
         if (decl is! ClassDeclaration) continue;
 
+        String? superClass;
+        final interfaces = <String>[];
+
+        // Superclass:
+        final extendsClause = decl.extendsClause;
+        if (extendsClause != null) {
+          superClass = extendsClause.superclass.toSource();
+        }
+
+        // Interfaces:
+        final implementsClause = decl.implementsClause;
+        if (implementsClause != null) {
+          for (final type in implementsClause.interfaces) {
+            interfaces.add(type.toSource());
+          }
+        }
+
+        // Mixins:
+        final mixins = <String>[];
+        final withClause = decl.withClause;
+        if (withClause != null) {
+          for (final type in withClause.mixinTypes) {
+            mixins.add(type.toSource());
+          }
+        }
+
         final fields = <DartFieldInfo>[];
 
         var body = decl.body as BlockClassBody;
@@ -237,7 +263,13 @@ class DartInspect {
 
         final className = decl.namePart.typeName.lexeme;
 
-        yield DartClassFields(className, fields, filePath: filePath);
+        yield DartClassInfo(
+          className,
+          fields,
+          superClass: superClass,
+          interfaces: interfaces,
+          filePath: filePath,
+        );
       }
     }
   }
