@@ -1,6 +1,6 @@
 name: dart_inspect
 description: Dart source inspection tool and CLI for reporting imports, classes, and fields using the analyzer AST, with Markdown and programmatic support.
-version: 1.0.2
+version: 1.0.3
 repository: https://github.com/gmpassos/dart_inspect
 
 executables:
@@ -11,6 +11,7 @@ environment:
 
 dependencies:
   analyzer: ^10.2.0
+  collection: ^1.19.1
 
 dev_dependencies:
   lints: ^6.1.0

@@ -1,3 +1,5 @@
+import 'package:collection/collection.dart';
+
 /// Base information used by report entries produced during Dart source analysis.
 ///
 /// A report may optionally be associated with a [filePath], allowing results
@@ -5,7 +7,7 @@
 ///
 /// Implementations must provide structured serialization via [toJson] and
 /// human-readable representations through [toMarkdown] and [toString].
-abstract class ReportInfo {
+abstract class ReportInfo implements Comparable<ReportInfo> {
   /// Path of the file associated with this report entry, if available.
   final String? filePath;
 
@@ -28,12 +30,31 @@ abstract class ReportInfo {
   /// when available.
   @override
   String toString({bool withFilePath = true});
+
+  @override
+  int compareTo(ReportInfo other) {
+    var fp1 = filePath;
+    var fp2 = other.filePath;
+
+    if (fp1 != null) {
+      if (fp2 != null) {
+        return fp1.compareTo(fp2);
+      } else {
+        return -1;
+      }
+    }
+    if (fp2 != null) {
+      return 1;
+    } else {
+      return 0;
+    }
+  }
 }
 
 /// Describes a Dart class field.
 ///
 /// Stores the field [name] and its declared Dart [type].
-class DartFieldInfo {
+class DartFieldInfo implements Comparable<DartFieldInfo> {
   /// Field name.
   final String name;
 
@@ -48,41 +69,142 @@ class DartFieldInfo {
   /// Returns the field formatted as `type name`.
   @override
   String toString() => '$type $name';
+
+  @override
+  int compareTo(DartFieldInfo other) {
+    var cmp = name.compareTo(other.name);
+    if (cmp == 0) {
+      cmp = type.compareTo(other.type);
+    }
+    return cmp;
+  }
 }
 
-/// Report describing the fields declared in a Dart class.
-class DartClassFields extends ReportInfo {
+/// Report describing a Dart class, including its fields and hierarchy.
+///
+/// This report consolidates all relevant structural information about a class:
+/// - Declared [fields]
+/// - Inheritance via [superClass]
+/// - Implemented interfaces via [interfaces]
+///
+/// This unified model simplifies reporting and diagram generation by keeping
+/// all class-related data in a single structure.
+///
+/// The report supports serialization to JSON, Markdown, Mermaid, and
+/// human-readable text formats.
+class DartClassInfo extends ReportInfo {
   /// Name of the analyzed class.
   final String className;
 
   /// Fields declared in the class.
   final List<DartFieldInfo> fields;
 
-  const DartClassFields(this.className, this.fields, {super.filePath});
+  /// Name of the superclass (from `extends`), if any.
+  final String? superClass;
+
+  /// List of implemented interfaces (from `implements`).
+  final List<String> interfaces;
+
+  /// List of implemented mixins (from `implements`).
+  final List<String> mixins;
+
+  /// Whether this class is declared as `abstract`.
+  final bool isAbstract;
+
+  /// Whether this class is declared as an `interface class`.
+  final bool isInterface;
+
+  /// Whether this declaration is a `mixin`.
+  final bool isMixin;
+
+  const DartClassInfo(
+    this.className,
+    this.fields, {
+    this.isAbstract = false,
+    this.isMixin = false,
+    this.isInterface = false,
+    this.superClass,
+    this.interfaces = const [],
+    this.mixins = const [],
+    super.filePath,
+  });
 
   /// Converts this class report into JSON format.
+  ///
+  /// Includes fields and hierarchy information.
   @override
   Map<String, Object?> toJson() => {
     'className': className,
     'filePath': filePath,
     'fields': fields.map((f) => f.toJson()).toList(),
+    'abstract': isAbstract,
+    'interface': isInterface,
+    'mixin': isMixin,
+    'superClass': superClass,
+    'interfaces': interfaces,
+    'mixins': mixins,
   };
 
-  /// Returns a Markdown section listing all class fields.
+  /// Returns a Markdown section describing the class.
   ///
-  /// Optionally includes the source file path.
+  /// Includes:
+  /// - Class name
+  /// - Optional file path
+  /// - Inheritance (`extends`)
+  /// - Implemented interfaces (`implements`)
+  /// - Declared fields
+  ///
+  /// Example:
+  /// ```md
+  /// ### User
+  ///
+  /// File: lib/user.dart
+  ///
+  /// Extends: Person
+  /// Implements: Serializable
+  ///
+  /// - String name
+  /// - int age
+  /// ```
   @override
-  String toMarkdown({bool withFilePath = true}) {
+  String toMarkdown({bool withFilePath = true, bool sortEntries = false}) {
     final out = StringBuffer();
 
-    out.writeln('### $className');
+    final modifiers = [
+      if (isAbstract) 'abstract',
+      if (isInterface) 'interface',
+      if (isMixin) 'mixin',
+    ].join(' ');
+
+    out.writeln('### ${modifiers.isNotEmpty ? '$modifiers ' : ''}$className');
 
     final filePath = this.filePath;
     if (withFilePath && filePath != null && filePath.isNotEmpty) {
       out.write('\nFile: $filePath\n');
     }
 
+    var classKind = false;
+
+    if (superClass != null && superClass!.isNotEmpty) {
+      classKind = true;
+      out.writeln('\nExtends: $superClass');
+    }
+
+    if (interfaces.isNotEmpty) {
+      if (!classKind) out.writeln();
+      classKind = true;
+      out.writeln('Implements: ${interfaces.sortIf(sortEntries).join(', ')}');
+    }
+
+    if (mixins.isNotEmpty) {
+      if (!classKind) out.writeln();
+      classKind = true;
+      out.writeln('With: ${mixins.sortIf(sortEntries).join(', ')}');
+    }
+
     out.writeln();
+
+    var fields = this.fields.toList()..sortIf(sortEntries);
 
     for (final field in fields) {
       out.writeln('- $field');
@@ -91,23 +213,24 @@ class DartClassFields extends ReportInfo {
     return out.toString();
   }
 
-  /// Returns a Mermaid representation of this class and its fields.
+  /// Returns a Mermaid representation of this class, including hierarchy.
   ///
-  /// Produces a `classDiagram`-compatible class node, where each field
-  /// is rendered as a class member using the format `type name`.
-  ///
-  /// The class name is sanitized to a valid Mermaid identifier.
+  /// Produces:
+  /// - A `class` block with fields
+  /// - Inheritance (`extends`) using `<|--`
+  /// - Interface implementation (`implements`) using `<|..`
   ///
   /// This output is intended to be composed with other Mermaid fragments
-  /// (e.g., multiple classes or relationships) under a single
-  /// `classDiagram` block.
+  /// under a single `classDiagram` block.
   ///
   /// Example output:
   /// ```mermaid
   /// class User {
   ///   String name
-  ///   int age
   /// }
+  ///
+  /// Person <|-- User
+  /// Serializable <|.. User
   /// ```
   @override
   String toMermaid() {
@@ -115,7 +238,18 @@ class DartClassFields extends ReportInfo {
 
     final classId = className.toMermaidId();
 
-    b.writeln('class $classId {');
+    // Class declaration with stereotypes
+    final stereotypes = [
+      if (isAbstract) 'abstract',
+      if (isInterface) 'interface',
+      if (isMixin) 'mixin',
+    ];
+
+    if (stereotypes.isNotEmpty) {
+      b.writeln('class $classId <<${stereotypes.join(', ')}>> {');
+    } else {
+      b.writeln('class $classId {');
+    }
 
     for (final f in fields) {
       b.writeln('  ${f.type} ${f.name}');
@@ -123,17 +257,44 @@ class DartClassFields extends ReportInfo {
 
     b.writeln('}');
 
+    // Inheritance
+    if (superClass != null && superClass!.isNotEmpty) {
+      final parentId = superClass!.toMermaidId();
+      b.writeln('$parentId <|-- $classId');
+    }
+
+    // Interfaces
+    for (final i in interfaces) {
+      final interfaceId = i.toMermaidId();
+      b.writeln('$interfaceId <|.. $classId');
+    }
+
+    // Mixins (no native support → dependency style)
+    for (final m in mixins) {
+      final mixinId = m.toMermaidId();
+      b.writeln('$mixinId ..> $classId');
+    }
+
     return b.toString();
   }
 
-  /// Returns a readable multiline description of the class and its fields.
+  /// Returns a readable multiline description of the class.
+  ///
+  /// Includes hierarchy and fields.
   ///
   /// Optionally includes the source file path.
   @override
-  String toString({bool withFilePath = true}) {
+  @override
+  String toString({bool withFilePath = true, bool sortEntries = false}) {
     final str = StringBuffer();
 
-    str.write(className);
+    final modifiers = [
+      if (isAbstract) 'abstract',
+      if (isInterface) 'interface',
+      if (isMixin) 'mixin',
+    ].join(' ');
+
+    str.write('${modifiers.isNotEmpty ? '$modifiers ' : ''}$className');
 
     final filePath = this.filePath;
     if (withFilePath && filePath != null && filePath.isNotEmpty) {
@@ -142,11 +303,51 @@ class DartClassFields extends ReportInfo {
 
     str.writeln();
 
+    if (superClass != null && superClass!.isNotEmpty) {
+      str.writeln('  extends $superClass');
+    }
+
+    if (interfaces.isNotEmpty) {
+      str.writeln('  implements ${interfaces.sortIf(sortEntries).join(', ')}');
+    }
+
+    if (mixins.isNotEmpty) {
+      str.writeln('  with ${mixins.sortIf(sortEntries).join(', ')}');
+    }
+
+    var fields = this.fields.toList()..sortIf(sortEntries);
+
     for (final field in fields) {
-      str.writeln('  $field');
+      str.writeln('  - $field');
     }
 
     return str.toString();
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is DartClassInfo &&
+          runtimeType == other.runtimeType &&
+          className == other.className &&
+          superClass == other.superClass &&
+          ListEquality().equals(interfaces, other.interfaces) &&
+          ListEquality().equals(mixins, other.mixins) &&
+          filePath == other.filePath;
+
+  @override
+  int get hashCode => Object.hash(className, superClass, filePath);
+
+  @override
+  int compareTo(ReportInfo other) {
+    var cmp = super.compareTo(other);
+    if (cmp != 0) return cmp;
+
+    if (other is DartClassInfo) {
+      return className.compareTo(other.className);
+    }
+
+    return cmp;
   }
 }
 
@@ -244,6 +445,40 @@ class DartImportInfo extends ReportInfo {
 
     return buf.toString();
   }
+
+  @override
+  int compareTo(ReportInfo other) {
+    var cmp = super.compareTo(other);
+    if (cmp != 0) return cmp;
+
+    if (other is DartImportInfo) {
+      var importDart1 = uri.startsWith('dart:');
+      var importDart2 = other.uri.startsWith('dart:');
+
+      if (importDart1) {
+        if (!importDart2) {
+          return -1;
+        }
+      } else if (importDart2) {
+        return 1;
+      }
+
+      var importPack1 = uri.startsWith('package:');
+      var importPack2 = other.uri.startsWith('package:');
+
+      if (importPack1) {
+        if (!importPack2) {
+          return -1;
+        }
+      } else if (importPack2) {
+        return 1;
+      }
+
+      return uri.compareTo(other.uri);
+    }
+
+    return cmp;
+  }
 }
 
 /// Report describing all imports declared in a Dart file.
@@ -264,7 +499,7 @@ class DartFileImports extends ReportInfo {
   ///
   /// Optionally includes the source file path.
   @override
-  String toMarkdown({bool withFilePath = true}) {
+  String toMarkdown({bool withFilePath = true, bool sortEntries = false}) {
     final out = StringBuffer();
 
     out.writeln('### Imports');
@@ -275,6 +510,8 @@ class DartFileImports extends ReportInfo {
     }
 
     out.writeln();
+
+    var imports = this.imports.toList()..sortIf(sortEntries);
 
     for (final imp in imports) {
       out.writeln(imp.toMarkdown());
@@ -340,8 +577,29 @@ class DartFileImports extends ReportInfo {
 
     return out.toString();
   }
+
+  @override
+  int compareTo(ReportInfo other) {
+    var cmp = super.compareTo(other);
+    if (cmp != 0) return cmp;
+
+    if (other is! DartFileImports) {
+      return -1;
+    }
+
+    return cmp;
+  }
 }
 
 extension _MermaidSanitize on String {
   String toMermaidId() => replaceAll(RegExp(r'[^a-zA-Z0-9_]'), '_');
+}
+
+extension ListReportInfoExtension<T extends Comparable> on List<T> {
+  List<T> sortIf(bool condition) {
+    if (condition) {
+      sort();
+    }
+    return this;
+  }
 }

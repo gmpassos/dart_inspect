@@ -1,12 +1,18 @@
 %% Dart Inspect - Mermaid Report
 %% Directory: .
-%% Options: --mermaid
+%% Options: --mermaid, --sort-entries
 
 classDiagram
 
-  class DartClassFields {
-    List&lt;DartFieldInfo&gt; fields
+  class DartClassInfo {
     String className
+    List&lt;DartFieldInfo&gt; fields
+    List&lt;String&gt; interfaces
+    bool isAbstract
+    bool isInterface
+    bool isMixin
+    List&lt;String&gt; mixins
+    String? superClass
   }
 
   class DartFieldInfo {
@@ -19,9 +25,9 @@ classDiagram
   }
 
   class DartImportInfo {
-    String uri
-    String? prefix
     bool isDeferred
+    String? prefix
+    String uri
   }
 
   class DartInspect {
@@ -33,28 +39,45 @@ classDiagram
     bool markdown
     bool mermaid
     bool noClasses
+    bool noEmptyClasses
     bool noFinal
     bool noImports
     bool noPrimitives
     bool privateOnly
+    bool sortEntries
   }
 
   class DartInspectReporter {
-    DartInspectOptions options
+    <<abstract>>
     String directory
+    DartInspectOptions options
+  }
+
+  class DartInspectReporterMarkdown {
   }
 
   class DartInspectReporterMermaid {
-    dynamic _classes
+  }
+
+  class DartInspectReporterSimple {
   }
 
   class ReportInfo {
+    <<abstract>>
     String? filePath
   }
 
   %% Relationships
-  DartClassFields --> DartFieldInfo
+  Comparable <|.. DartFieldInfo
+  Comparable <|.. ReportInfo
+  DartClassInfo --> DartFieldInfo
   DartFileImports --> DartImportInfo
   DartInspect --> DartInspectOptions
   DartInspectReporter --> DartInspectOptions
+  DartInspectReporter <|-- DartInspectReporterMarkdown
+  DartInspectReporter <|-- DartInspectReporterMermaid
+  DartInspectReporter <|-- DartInspectReporterSimple
+  ReportInfo <|-- DartClassInfo
+  ReportInfo <|-- DartFileImports
+  ReportInfo <|-- DartImportInfo
 

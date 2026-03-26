@@ -32,6 +32,9 @@ class DartInspectOptions {
   /// Do not include class fields in the report.
   final bool noClasses;
 
+  /// Do not include empty classes in the report.
+  final bool noEmptyClasses;
+
   /// Do not include file imports in the report.
   final bool noImports;
 
@@ -40,6 +43,9 @@ class DartInspectOptions {
 
   /// Output report in Mermaid (class diagram) format.
   final bool mermaid;
+
+  /// Sort fields, classes, or entries alphabetically in the report.
+  final bool sortEntries;
 
   /// Creates inspection options.
   ///
@@ -51,9 +57,11 @@ class DartInspectOptions {
     this.finalOnly = false,
     this.noFinal = false,
     this.noClasses = false,
+    this.noEmptyClasses = false,
     this.noImports = false,
     this.markdown = false,
     this.mermaid = false,
+    this.sortEntries = false,
   }) : assert(!(finalOnly && noFinal), 'Cannot use finalOnly with noFinal'),
        assert(
          !(markdown && mermaid),
@@ -72,9 +80,11 @@ class DartInspectOptions {
     if (finalOnly) 'finalOnly',
     if (noFinal) 'noFinal',
     if (noClasses) 'noClasses',
+    if (noEmptyClasses) 'noEmptyClasses',
     if (noImports) 'noImports',
     if (markdown) 'markdown',
     if (mermaid) 'mermaid',
+    if (sortEntries) 'sortEntries',
   ];
 
   /// CLI-style option names corresponding to enabled flags.
@@ -86,9 +96,11 @@ class DartInspectOptions {
     if (finalOnly) '--final-only',
     if (noFinal) '--no-final',
     if (noClasses) '--no-classes',
+    if (noEmptyClasses) '--no-empty-classes',
     if (noImports) '--no-imports',
     if (markdown) '--markdown',
     if (mermaid) '--mermaid',
+    if (sortEntries) '--sort-entries',
   ];
 
   @override
@@ -201,6 +213,32 @@ class DartInspect {
       for (final decl in unit.declarations) {
         if (decl is! ClassDeclaration) continue;
 
+        String? superClass;
+        final interfaces = <String>[];
+
+        // Superclass:
+        final extendsClause = decl.extendsClause;
+        if (extendsClause != null) {
+          superClass = extendsClause.superclass.toSource();
+        }
+
+        // Interfaces:
+        final implementsClause = decl.implementsClause;
+        if (implementsClause != null) {
+          for (final type in implementsClause.interfaces) {
+            interfaces.add(type.toSource());
+          }
+        }
+
+        // Mixins:
+        final mixins = <String>[];
+        final withClause = decl.withClause;
+        if (withClause != null) {
+          for (final type in withClause.mixinTypes) {
+            mixins.add(type.toSource());
+          }
+        }
+
         final fields = <DartFieldInfo>[];
 
         var body = decl.body as BlockClassBody;
@@ -233,11 +271,27 @@ class DartInspect {
           }
         }
 
-        if (fields.isEmpty) continue;
+        if (fields.isEmpty && options.noEmptyClasses) {
+          continue;
+        }
 
         final className = decl.namePart.typeName.lexeme;
 
-        yield DartClassFields(className, fields, filePath: filePath);
+        final isAbstract = decl.abstractKeyword != null;
+        final isInterface = decl.interfaceKeyword != null;
+        final isMixin = decl.mixinKeyword != null;
+
+        yield DartClassInfo(
+          className,
+          fields,
+          superClass: superClass,
+          interfaces: interfaces,
+          mixins: mixins,
+          filePath: filePath,
+          isAbstract: isAbstract,
+          isInterface: isInterface,
+          isMixin: isMixin,
+        );
       }
     }
   }

@@ -51,23 +51,23 @@ import 'report_info.dart';
 /// - Markdown files with Mermaid support
 ///
 /// ### Notes
-/// - Only [DartClassFields] reports are currently used
+/// - Only [DartClassInfo] reports are currently used
 /// - Generic types like `List<Foo>` are resolved to `Foo`
 /// - Nullable types (`Foo?`) are normalized to `Foo`
 ///
 /// ### Limitations
-/// - Does not detect inheritance (`extends`, `implements`)
 /// - Does not distinguish between composition and aggregation
 /// - Only supports simple generic extraction (`<T>`)
 class DartInspectReporterMermaid extends DartInspectReporter {
   DartInspectReporterMermaid(super.directory, super.options);
 
-  final _classes = <String, List<DartFieldInfo>>{};
-
-  @override
   @override
   Future<String> build(Stream<ReportInfo> stream) async {
+    final sortEntries = options.sortEntries;
+
     final b = StringBuffer();
+
+    final classes = <String, DartClassInfo>{};
 
     // Header
     b.writeln('%% Dart Inspect - Mermaid Report');
@@ -79,49 +79,98 @@ class DartInspectReporterMermaid extends DartInspectReporter {
 
     // Collect data
     await for (final report in stream) {
-      if (report is DartClassFields) {
-        final list = _classes.putIfAbsent(report.className, () => []);
-        list.addAll(report.fields);
+      if (report is DartClassInfo) {
+        final existing = classes[report.className];
+
+        if (existing == null) {
+          classes[report.className] = report;
+        } else {
+          // merge fields only (keep first metadata)
+          classes[report.className] = DartClassInfo(
+            report.className,
+            [...existing.fields, ...report.fields],
+            isAbstract: existing.isAbstract,
+            isInterface: existing.isInterface,
+            isMixin: existing.isMixin,
+            superClass: existing.superClass,
+            interfaces: existing.interfaces,
+            mixins: existing.mixins,
+            filePath: existing.filePath,
+          );
+        }
       }
     }
 
     b.writeln('classDiagram');
     b.writeln();
 
-    // Classes
-    final classNames = _classes.keys.toList()..sort();
+    final classNames = classes.keys.toList()..sortIf(sortEntries);
 
+    // Classes (with fields)
     for (final name in classNames) {
-      final fields = _classes[name]!;
+      final c = classes[name]!;
+
+      final stereotypes = [
+        if (c.isAbstract) 'abstract',
+        if (c.isInterface) 'interface',
+        if (c.isMixin) 'mixin',
+      ];
 
       b.writeln('  class $name {');
 
-      final seen = <String>{};
-      final sortedFields =
-          fields.map((f) => '${_sanitize(f.type)} ${f.name}').toSet().toList()
-            ..sort();
+      if (stereotypes.isNotEmpty) {
+        b.writeln('    <<${stereotypes.join(', ')}>>');
+      }
 
-      for (final field in sortedFields) {
+      final seen = <String>{};
+
+      var fields = c.fields.toList()..sortIf(sortEntries);
+
+      final fieldsLines = fields
+          .map((f) => '${_sanitize(f.type)} ${f.name}')
+          .toSet()
+          .toList();
+
+      for (final field in fieldsLines) {
         if (!seen.add(field)) continue;
         b.writeln('    $field');
       }
 
       b.writeln('  }');
-      b.writeln(); // spacing between classes
+      b.writeln();
     }
 
-    // Relationships
     final relations = <String>{};
 
-    for (final entry in _classes.entries) {
-      final from = entry.key;
+    // Field-based relationships
+    for (final c in classes.values) {
+      var fields = c.fields.toList()..sortIf(sortEntries);
 
-      for (final f in entry.value) {
+      for (final f in fields) {
         final to = _extractTypeName(f.type);
 
-        if (_classes.containsKey(to)) {
-          relations.add('  $from --> $to');
+        if (classes.containsKey(to)) {
+          relations.add('  ${c.className} --> $to');
         }
+      }
+    }
+
+    // Hierarchy relationships
+    var classesInfos = classes.values.toList()..sortIf(sortEntries);
+
+    for (final c in classesInfos) {
+      final from = c.className;
+
+      if (c.superClass != null && c.superClass!.isNotEmpty) {
+        relations.add('  ${_extractClassName(c.superClass!)} <|-- $from');
+      }
+
+      for (final i in c.interfaces) {
+        relations.add('  ${_extractClassName(i)} <|.. $from');
+      }
+
+      for (final m in c.mixins) {
+        relations.add('  ${_extractClassName(m)} ..> $from');
       }
     }
 
@@ -139,10 +188,23 @@ class DartInspectReporterMermaid extends DartInspectReporter {
   String _sanitize(String t) =>
       t.replaceAll('<', '&lt;').replaceAll('>', '&gt;');
 
+  static final _regExpClassName = RegExp(r'^(\w+)<?');
+
+  String _extractClassName(String t) {
+    final cleaned = t.replaceAll('?', '');
+
+    final match = _regExpClassName.firstMatch(cleaned);
+    if (match != null) return match.group(1)!;
+
+    return cleaned.split('.').last;
+  }
+
+  static final _regExpTypeName = RegExp(r'<(\w+)>');
+
   String _extractTypeName(String t) {
     final cleaned = t.replaceAll('?', '');
 
-    final match = RegExp(r'<(\w+)>').firstMatch(cleaned);
+    final match = _regExpTypeName.firstMatch(cleaned);
     if (match != null) return match.group(1)!;
 
     return cleaned.split('.').last;
