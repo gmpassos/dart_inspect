@@ -43,8 +43,8 @@ void main() {
       final output = await reporter.build(_mockStream());
 
       expect(output, contains('dart_inspect'));
-      expect(output, contains('Directory : test_dir'));
-      expect(output, contains('Format    : simple'));
+      expect(output, contains('Path   : test_dir'));
+      expect(output, contains('Format : simple'));
 
       expect(output, contains('Imports:'));
       expect(output, contains('abstract Base'));
