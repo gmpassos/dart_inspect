@@ -63,6 +63,8 @@ class DartInspectReporterMermaid extends DartInspectReporter {
 
   @override
   Future<String> build(Stream<ReportInfo> stream) async {
+    final sortEntries = options.sortEntries;
+
     final b = StringBuffer();
 
     final classes = <String, DartClassInfo>{};
@@ -102,7 +104,7 @@ class DartInspectReporterMermaid extends DartInspectReporter {
     b.writeln('classDiagram');
     b.writeln();
 
-    final classNames = classes.keys.toList()..sort();
+    final classNames = classes.keys.toList()..sortIf(sortEntries);
 
     // Classes (with fields)
     for (final name in classNames) {
@@ -122,14 +124,14 @@ class DartInspectReporterMermaid extends DartInspectReporter {
 
       final seen = <String>{};
 
-      var fields = c.fields.toList()..sort();
+      var fields = c.fields.toList()..sortIf(sortEntries);
 
-      final sortedFields = fields
+      final fieldsLines = fields
           .map((f) => '${_sanitize(f.type)} ${f.name}')
           .toSet()
           .toList();
 
-      for (final field in sortedFields) {
+      for (final field in fieldsLines) {
         if (!seen.add(field)) continue;
         b.writeln('    $field');
       }
@@ -142,7 +144,9 @@ class DartInspectReporterMermaid extends DartInspectReporter {
 
     // Field-based relationships
     for (final c in classes.values) {
-      for (final f in c.fields) {
+      var fields = c.fields.toList()..sortIf(sortEntries);
+
+      for (final f in fields) {
         final to = _extractTypeName(f.type);
 
         if (classes.containsKey(to)) {
@@ -152,7 +156,9 @@ class DartInspectReporterMermaid extends DartInspectReporter {
     }
 
     // Hierarchy relationships
-    for (final c in classes.values) {
+    var classesInfos = classes.values.toList()..sortIf(sortEntries);
+
+    for (final c in classesInfos) {
       final from = c.className;
 
       if (c.superClass != null && c.superClass!.isNotEmpty) {

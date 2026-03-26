@@ -35,6 +35,8 @@ class DartInspectReporterMarkdown extends DartInspectReporter {
   /// Returns the full Markdown report as a [String].
   @override
   Future<String> build(Stream<ReportInfo> stream) async {
+    final sortEntries = options.sortEntries;
+
     final b = StringBuffer();
 
     // Group by file
@@ -79,14 +81,20 @@ class DartInspectReporterMarkdown extends DartInspectReporter {
       final reports = files[path]!;
 
       // stable ordering inside file
-      reports.sort();
+      if (sortEntries) {
+        reports.sort();
+      }
 
       for (final report in reports) {
         if (report is DartFileImports) {
-          b.writeln(report.toMarkdown(withFilePath: false));
+          b.writeln(
+            report.toMarkdown(withFilePath: false, sortEntries: sortEntries),
+          );
           b.writeln();
         } else if (report is DartClassInfo) {
-          b.writeln(report.toMarkdown(withFilePath: false));
+          b.writeln(
+            report.toMarkdown(withFilePath: false, sortEntries: sortEntries),
+          );
           b.writeln();
         }
       }

@@ -167,7 +167,7 @@ class DartClassInfo extends ReportInfo {
   /// - int age
   /// ```
   @override
-  String toMarkdown({bool withFilePath = true}) {
+  String toMarkdown({bool withFilePath = true, bool sortEntries = false}) {
     final out = StringBuffer();
 
     final modifiers = [
@@ -193,16 +193,18 @@ class DartClassInfo extends ReportInfo {
     if (interfaces.isNotEmpty) {
       if (!classKind) out.writeln();
       classKind = true;
-      out.writeln('Implements: ${interfaces.join(', ')}');
+      out.writeln('Implements: ${interfaces.sortIf(sortEntries).join(', ')}');
     }
 
     if (mixins.isNotEmpty) {
       if (!classKind) out.writeln();
       classKind = true;
-      out.writeln('With: ${mixins.join(', ')}');
+      out.writeln('With: ${mixins.sortIf(sortEntries).join(', ')}');
     }
 
     out.writeln();
+
+    var fields = this.fields.toList()..sortIf(sortEntries);
 
     for (final field in fields) {
       out.writeln('- $field');
@@ -283,7 +285,7 @@ class DartClassInfo extends ReportInfo {
   /// Optionally includes the source file path.
   @override
   @override
-  String toString({bool withFilePath = true}) {
+  String toString({bool withFilePath = true, bool sortEntries = false}) {
     final str = StringBuffer();
 
     final modifiers = [
@@ -306,12 +308,14 @@ class DartClassInfo extends ReportInfo {
     }
 
     if (interfaces.isNotEmpty) {
-      str.writeln('  implements ${interfaces.join(', ')}');
+      str.writeln('  implements ${interfaces.sortIf(sortEntries).join(', ')}');
     }
 
     if (mixins.isNotEmpty) {
-      str.writeln('  with ${mixins.join(', ')}');
+      str.writeln('  with ${mixins.sortIf(sortEntries).join(', ')}');
     }
+
+    var fields = this.fields.toList()..sortIf(sortEntries);
 
     for (final field in fields) {
       str.writeln('  - $field');
@@ -448,6 +452,28 @@ class DartImportInfo extends ReportInfo {
     if (cmp != 0) return cmp;
 
     if (other is DartImportInfo) {
+      var importDart1 = uri.startsWith('dart:');
+      var importDart2 = other.uri.startsWith('dart:');
+
+      if (importDart1) {
+        if (!importDart2) {
+          return -1;
+        }
+      } else if (importDart2) {
+        return 1;
+      }
+
+      var importPack1 = uri.startsWith('package:');
+      var importPack2 = other.uri.startsWith('package:');
+
+      if (importPack1) {
+        if (!importPack2) {
+          return -1;
+        }
+      } else if (importPack2) {
+        return 1;
+      }
+
       return uri.compareTo(other.uri);
     }
 
@@ -473,7 +499,7 @@ class DartFileImports extends ReportInfo {
   ///
   /// Optionally includes the source file path.
   @override
-  String toMarkdown({bool withFilePath = true}) {
+  String toMarkdown({bool withFilePath = true, bool sortEntries = false}) {
     final out = StringBuffer();
 
     out.writeln('### Imports');
@@ -484,6 +510,8 @@ class DartFileImports extends ReportInfo {
     }
 
     out.writeln();
+
+    var imports = this.imports.toList()..sortIf(sortEntries);
 
     for (final imp in imports) {
       out.writeln(imp.toMarkdown());
@@ -565,4 +593,13 @@ class DartFileImports extends ReportInfo {
 
 extension _MermaidSanitize on String {
   String toMermaidId() => replaceAll(RegExp(r'[^a-zA-Z0-9_]'), '_');
+}
+
+extension ListReportInfoExtension<T extends Comparable> on List<T> {
+  List<T> sortIf(bool condition) {
+    if (condition) {
+      sort();
+    }
+    return this;
+  }
 }

@@ -44,6 +44,9 @@ class DartInspectOptions {
   /// Output report in Mermaid (class diagram) format.
   final bool mermaid;
 
+  /// Sort fields, classes, or entries alphabetically in the report.
+  final bool sortEntries;
+
   /// Creates inspection options.
   ///
   /// The assertion prevents incompatible configurations where both
@@ -58,6 +61,7 @@ class DartInspectOptions {
     this.noImports = false,
     this.markdown = false,
     this.mermaid = false,
+    this.sortEntries = false,
   }) : assert(!(finalOnly && noFinal), 'Cannot use finalOnly with noFinal'),
        assert(
          !(markdown && mermaid),
@@ -80,6 +84,7 @@ class DartInspectOptions {
     if (noImports) 'noImports',
     if (markdown) 'markdown',
     if (mermaid) 'mermaid',
+    if (sortEntries) 'sortEntries',
   ];
 
   /// CLI-style option names corresponding to enabled flags.
@@ -95,6 +100,7 @@ class DartInspectOptions {
     if (noImports) '--no-imports',
     if (markdown) '--markdown',
     if (mermaid) '--mermaid',
+    if (sortEntries) '--sort-entries',
   ];
 
   @override

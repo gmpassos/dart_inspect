@@ -2,6 +2,7 @@
 
 - CLI (`bin/dart_inspect.dart`):
   - Added new option `--no-empty-classes` to exclude empty classes from the report.
+  - Added new option `--sort-entries` to sort fields and classes alphabetically (default: false).
 
 - `DartInspectOptions` (`lib/src/dart_inspect_base.dart`):
   - Added `noEmptyClasses` boolean option to exclude empty classes.

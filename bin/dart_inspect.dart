@@ -18,6 +18,8 @@ Options:
   --mermaid           Mermaid output
   --simple            Simple output (default)
 
+  --sort-entries      Sort fields and classes alphabetically (default: false)
+
   -h, --help          Show this help
 ''';
 
@@ -41,6 +43,7 @@ Future<void> main(List<String> args) async {
     '--markdown',
     '--mermaid',
     '--simple',
+    '--sort-entries',
   };
 
   final unknown = optionsSet.difference(validOptions);
@@ -76,6 +79,7 @@ Future<void> main(List<String> args) async {
     noEmptyClasses: optionsSet.contains('--no-empty-classes'),
     markdown: markdown,
     mermaid: mermaid,
+    sortEntries: optionsSet.contains('--sort-entries'),
   );
 
   final root = Directory(dirPath);

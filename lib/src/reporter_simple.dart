@@ -6,6 +6,8 @@ class DartInspectReporterSimple extends DartInspectReporter {
 
   @override
   Future<String> build(Stream<ReportInfo> stream) async {
+    final sortEntries = options.sortEntries;
+
     final b = StringBuffer();
 
     // Group by file
@@ -29,7 +31,7 @@ class DartInspectReporterSimple extends DartInspectReporter {
     b.writeln();
 
     // Files (sorted)
-    final sortedPaths = files.keys.toList()..sort();
+    final sortedPaths = files.keys.toList()..sortIf(sortEntries);
 
     for (final path in sortedPaths) {
       b.writeln('=' * 80);
@@ -39,17 +41,21 @@ class DartInspectReporterSimple extends DartInspectReporter {
       final reports = files[path]!;
 
       // deterministic order
-      reports.sort();
+      if (sortEntries) {
+        reports.sort();
+      }
 
       for (final report in reports) {
         if (report is DartFileImports) {
           b.writeln('Imports:');
-          for (final imp in report.imports) {
+          for (final imp in report.imports..sortIf(sortEntries)) {
             b.writeln('  ${imp.toString(withFilePath: false)}');
           }
           b.writeln();
         } else if (report is DartClassInfo) {
-          b.writeln(report.toString(withFilePath: false));
+          b.writeln(
+            report.toString(withFilePath: false, sortEntries: sortEntries),
+          );
           b.writeln();
         }
       }
