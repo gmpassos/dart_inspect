@@ -156,6 +156,127 @@ class User {
     });
   });
 
+  group('ignoreGenerated option', () {
+    test('isGeneratedFile detects known suffixes', () {
+      final inspect = DartInspect(const DartInspectOptions());
+
+      expect(inspect.isGeneratedFile('a.g.dart'), isTrue);
+      expect(inspect.isGeneratedFile('a.gen.dart'), isTrue);
+      expect(inspect.isGeneratedFile('a.freezed.dart'), isTrue);
+
+      expect(inspect.isGeneratedFile('a.dart'), isFalse);
+      expect(inspect.isGeneratedFile(null), isFalse);
+    });
+
+    test('scanCode skips generated file when ignoreGenerated=true', () async {
+      final inspect = DartInspect(
+        const DartInspectOptions(ignoreGenerated: true),
+      );
+
+      const code = '''
+class A {
+  int x;
+}
+''';
+
+      final results = await inspect
+          .scanCode(code, filePath: 'model.g.dart')
+          .toList();
+
+      expect(results, isEmpty);
+    });
+
+    test(
+      'scanCode does NOT skip generated file when ignoreGenerated=false',
+      () async {
+        final inspect = DartInspect(
+          const DartInspectOptions(ignoreGenerated: false),
+        );
+
+        const code = '''
+class A {
+  int x;
+}
+''';
+
+        final results = await inspect
+            .scanCode(code, filePath: 'model.g.dart')
+            .toList();
+
+        expect(results, isNotEmpty);
+      },
+    );
+
+    test(
+      'scanDirectory skips generated files when ignoreGenerated=true',
+      () async {
+        final tempDir = await Directory.systemTemp.createTemp();
+
+        final normalFile = File('${tempDir.path}/a.dart');
+        final generatedFile = File('${tempDir.path}/b.g.dart');
+
+        await normalFile.writeAsString('''
+class A {
+  int x;
+}
+''');
+
+        await generatedFile.writeAsString('''
+class B {
+  int y;
+}
+''');
+
+        final inspect = DartInspect(
+          const DartInspectOptions(ignoreGenerated: true),
+        );
+
+        final results = await inspect.scanDirectory(tempDir).toList();
+
+        // Should only include A, not B
+        final hasA = results.any((r) => r.toString().contains('A'));
+        final hasB = results.any((r) => r.toString().contains('B'));
+
+        expect(hasA, isTrue);
+        expect(hasB, isFalse);
+      },
+    );
+
+    test('custom generatedFilesExtension works', () async {
+      final inspect = DartInspect(
+        const DartInspectOptions(ignoreGenerated: true),
+      );
+
+      inspect.generatedFilesExtension.add('.custom.dart');
+
+      const code = '''
+class C {
+  int z;
+}
+''';
+
+      final results = await inspect
+          .scanCode(code, filePath: 'file.custom.dart')
+          .toList();
+
+      expect(results, isEmpty);
+    });
+  });
+
+  group('flags and options include ignoreGenerated', () {
+    test('flags contains ignoreGenerated', () {
+      const options = DartInspectOptions(ignoreGenerated: true);
+
+      expect(options.flags, contains('ignoreGenerated'));
+    });
+
+    test('options contains CLI flag', () {
+      const options = DartInspectOptions(ignoreGenerated: true);
+
+      expect(options.options, contains('--ignore-generated'));
+    });
+  });
+
   group('Markdown output', () {
     test('class markdown format stable', () {
       const report = DartClassInfo('User', [
@@ -201,7 +322,7 @@ class A {
 }
 ''');
 
-      const inspect = DartInspect(DartInspectOptions());
+      var inspect = DartInspect(const DartInspectOptions());
 
       final results = await inspect.scanFile(file).toList();
 
@@ -221,7 +342,7 @@ class Model {
 }
 ''');
 
-      const inspect = DartInspect(DartInspectOptions());
+      var inspect = DartInspect(const DartInspectOptions());
 
       final results = await inspect.scanDirectory(tempDir).toList();
 

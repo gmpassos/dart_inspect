@@ -38,6 +38,9 @@ class DartInspectOptions {
   /// Do not include file imports in the report.
   final bool noImports;
 
+  /// Ignore generated files (`.g.dart`).
+  final bool ignoreGenerated;
+
   /// Output report in Markdown format.
   final bool markdown;
 
@@ -59,6 +62,7 @@ class DartInspectOptions {
     this.noClasses = false,
     this.noEmptyClasses = false,
     this.noImports = false,
+    this.ignoreGenerated = false,
     this.markdown = false,
     this.mermaid = false,
     this.sortEntries = false,
@@ -82,6 +86,7 @@ class DartInspectOptions {
     if (noClasses) 'noClasses',
     if (noEmptyClasses) 'noEmptyClasses',
     if (noImports) 'noImports',
+    if (ignoreGenerated) 'ignoreGenerated',
     if (markdown) 'markdown',
     if (mermaid) 'mermaid',
     if (sortEntries) 'sortEntries',
@@ -98,6 +103,7 @@ class DartInspectOptions {
     if (noClasses) '--no-classes',
     if (noEmptyClasses) '--no-empty-classes',
     if (noImports) '--no-imports',
+    if (ignoreGenerated) '--ignore-generated',
     if (markdown) '--markdown',
     if (mermaid) '--mermaid',
     if (sortEntries) '--sort-entries',
@@ -144,7 +150,7 @@ class DartInspect {
   final DartInspectOptions options;
 
   /// Creates a new inspector using the provided [options].
-  const DartInspect(this.options);
+  DartInspect(this.options);
 
   /// Recursively scans a directory for `.dart` files and emits
   /// discovered report entries.
@@ -168,6 +174,32 @@ class DartInspect {
     yield* scanCode(content, filePath: file.path);
   }
 
+  /// File name suffixes commonly used by generated Dart files.
+  ///
+  /// When [DartInspectOptions.ignoreGenerated] is enabled,
+  /// any file whose path ends with one of these suffixes will be
+  /// skipped during inspection.
+  ///
+  /// Defaults to `['.g.dart', '.gen.dart', '.freezed.dart']`.
+  /// You can customize this list to include other generated file patterns.
+  ///
+  /// See [isGeneratedFile].
+  final List<String> generatedFilesExtension = [
+    '.g.dart',
+    '.gen.dart',
+    '.freezed.dart',
+  ];
+
+  /// Returns whether [filePath] refers to a generated Dart file.
+  ///
+  /// A file is considered generated if its path ends with any of the suffixes
+  /// defined in [generatedFilesExtension].
+  ///
+  /// Returns `false` if [filePath] is `null`.
+  bool isGeneratedFile(String? filePath) =>
+      filePath != null &&
+      generatedFilesExtension.any((ext) => filePath.endsWith(ext));
+
   /// Analyzes Dart source [content] and emits discovered report data.
   ///
   /// Optionally associates results with a [filePath].
@@ -177,6 +209,10 @@ class DartInspect {
   /// - class declarations
   /// - instance field definitions
   Stream<ReportInfo> scanCode(String content, {String? filePath}) async* {
+    if (options.ignoreGenerated && isGeneratedFile(filePath)) {
+      return;
+    }
+
     final result = parseString(
       content: content,
       featureSet: FeatureSet.latestLanguageVersion(),
