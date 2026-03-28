@@ -201,7 +201,7 @@ class A {
 }
 ''');
 
-      const inspect = DartInspect(DartInspectOptions());
+      var inspect = DartInspect(const DartInspectOptions());
 
       final results = await inspect.scanFile(file).toList();
 
@@ -221,7 +221,7 @@ class Model {
 }
 ''');
 
-      const inspect = DartInspect(DartInspectOptions());
+      var inspect = DartInspect(const DartInspectOptions());
 
       final results = await inspect.scanDirectory(tempDir).toList();
 

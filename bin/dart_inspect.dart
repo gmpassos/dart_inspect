@@ -13,6 +13,7 @@ Options:
   --no-imports        Do not show file imports
   --no-classes        Do not show class fields
   --no-empty-classes  Do not include empty classes
+  --ignore-generated  Ignore generated files (*.g.dart, *.freezed.dart)
 
   --markdown          Markdown output
   --mermaid           Mermaid output
@@ -40,6 +41,7 @@ Future<void> main(List<String> args) async {
     '--no-imports',
     '--no-classes',
     '--no-empty-classes',
+    '--ignore-generated',
     '--markdown',
     '--mermaid',
     '--simple',
@@ -77,6 +79,7 @@ Future<void> main(List<String> args) async {
     noImports: optionsSet.contains('--no-imports'),
     noClasses: optionsSet.contains('--no-classes'),
     noEmptyClasses: optionsSet.contains('--no-empty-classes'),
+    ignoreGenerated: optionsSet.contains('--ignore-generated'),
     markdown: markdown,
     mermaid: mermaid,
     sortEntries: optionsSet.contains('--sort-entries'),

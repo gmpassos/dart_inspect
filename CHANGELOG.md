@@ -1,3 +1,17 @@
+## 1.0.6
+
+- CLI (`bin/dart_inspect.dart`):
+  - Added `--ignore-generated` option to ignore generated Dart files (e.g., `.g.dart`, `.freezed.dart`).
+
+- `DartInspectOptions` (`lib/src/dart_inspect_base.dart`):
+  - Added `ignoreGenerated` boolean option to control ignoring generated files.
+  - Updated `flags` and `options` getters to include `ignoreGenerated`.
+
+- `DartInspect` (`lib/src/dart_inspect_base.dart`):
+  - Added `generatedFilesExtension` list with common generated file suffixes.
+  - Added `isGeneratedFile` method to detect generated files by suffix.
+  - Updated `scanCode` to skip processing files identified as generated when `ignoreGenerated` is enabled.
+
 ## 1.0.5
 
 - CLI (`bin/dart_inspect.dart`):
